@@ -183,9 +183,9 @@ const APP_MANIFEST = {
   background_color: "#f3f4f6",
   theme_color: "#3b82f6",
   icons: [
-    { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-    { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
-    { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
+    { src: "/icon-192.png?v=3cb4452362", sizes: "192x192", type: "image/png" },
+    { src: "/icon-512.png?v=3cb4452362", sizes: "512x512", type: "image/png" },
+    { src: "/icon-512.png?v=3cb4452362", sizes: "512x512", type: "image/png", purpose: "maskable" }
   ]
 };
 
@@ -213,9 +213,9 @@ function getLoginHTML() {
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="文件管理">
     <meta name="theme-color" content="#3b82f6">
-    <link rel="apple-touch-icon" href="/icon-180.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/icon-180.png?v=3cb4452362">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3cb4452362">
+    <link rel="manifest" href="/manifest.webmanifest?v=3cb4452362">
     <title>登录 - 文件管理</title>
     <style>
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -271,9 +271,9 @@ function getAdminHTML() {
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="文件管理">
     <meta name="theme-color" content="#3b82f6">
-    <link rel="apple-touch-icon" href="/icon-180.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/icon-180.png?v=3cb4452362">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3cb4452362">
+    <link rel="manifest" href="/manifest.webmanifest?v=3cb4452362">
     <title>文件管理控制台</title>
     <style>
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px; color: #374151; }
