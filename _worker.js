@@ -315,9 +315,10 @@ function getAdminHTML() {
       .upload-btn:hover { background-color: #2563eb; }
       
       /* 表格区 */
-      .table-container { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; background: #ffffff; }
-      table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 680px; -webkit-text-size-adjust: 100%; }
-      th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 2; box-shadow: inset 0 -1px 0 #e5e7eb; }
+      .table-container { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; background: #ffffff; touch-action: pan-y; }
+      .thead-wrap { flex-shrink: 0; overflow: hidden; background-color: #f9fafb; }
+      table { width: 100%; border-collapse: collapse; min-width: 680px; -webkit-text-size-adjust: 100%; table-layout: fixed; }
+      th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
       td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; line-height: 20px; }
       td.col-size { min-width: 96px; }
       td.col-time { min-width: 176px; }
@@ -361,8 +362,9 @@ function getAdminHTML() {
       </div>
 
       <div class="card list-card" style="padding: 0;">
-        <div class="table-container">
-          <table>
+        <div class="thead-wrap">
+          <table class="head-table">
+            <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:156px"></colgroup>
             <thead>
               <tr>
                 <th>文件名</th>
@@ -371,6 +373,11 @@ function getAdminHTML() {
                 <th>操作</th>
               </tr>
             </thead>
+          </table>
+        </div>
+        <div class="table-container">
+          <table>
+            <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:156px"></colgroup>
             <tbody id="fileList"></tbody>
           </table>
         </div>
@@ -746,31 +753,53 @@ function getAdminHTML() {
 
       (function () {
         const sc = document.querySelector('.table-container');
+        const headTable = document.querySelector('.head-table');
         if (!sc) return;
-        let sx = 0, sy = 0, lockAxis = '', lockLeft = 0, lockTop = 0, gestureOn = false, settleTimer = null;
+        sc.addEventListener('scroll', function () {
+          if (headTable) headTable.style.transform = 'translateX(' + (-sc.scrollLeft) + 'px)';
+        }, { passive: true });
+        let sx = 0, sy = 0, sLeft = 0, hMode = false, decided = false, lastX = 0, lastT = 0, vel = 0, rafId = 0, suppressClick = false;
+        function stopMomentum() { if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } }
         sc.addEventListener('touchstart', function (e) {
-          if (e.touches.length !== 1) { gestureOn = false; lockAxis = ''; return; }
+          stopMomentum();
+          hMode = false; decided = false; vel = 0; suppressClick = false;
+          if (e.touches.length !== 1) return;
           const t = e.touches[0];
-          sx = t.clientX; sy = t.clientY;
-          lockLeft = sc.scrollLeft; lockTop = sc.scrollTop;
-          lockAxis = ''; gestureOn = true;
+          sx = t.clientX; sy = t.clientY; sLeft = sc.scrollLeft;
+          lastX = t.clientX; lastT = Date.now();
         }, { passive: true });
         sc.addEventListener('touchmove', function (e) {
-          if (!gestureOn || lockAxis) return;
+          if (e.touches.length !== 1) return;
           const t = e.touches[0];
-          const dx = Math.abs(t.clientX - sx), dy = Math.abs(t.clientY - sy);
-          if (Math.max(dx, dy) < 8) return;
-          lockAxis = dy >= dx ? 'y' : 'x';
+          const dx = t.clientX - sx, dy = t.clientY - sy;
+          if (!decided && Math.max(Math.abs(dx), Math.abs(dy)) > 8) { decided = true; hMode = Math.abs(dx) > Math.abs(dy); }
+          if (hMode) {
+            sc.scrollLeft = sLeft - dx;
+            const now = Date.now(), dt = now - lastT;
+            if (dt > 0) vel = 0.7 * vel + 0.3 * ((t.clientX - lastX) / dt);
+            lastX = t.clientX; lastT = now;
+          }
         }, { passive: true });
-        sc.addEventListener('scroll', function () {
-          if (!lockAxis) return;
-          if (lockAxis === 'y' && sc.scrollLeft !== lockLeft) sc.scrollLeft = lockLeft;
-          if (lockAxis === 'x' && sc.scrollTop !== lockTop) sc.scrollTop = lockTop;
-          if (settleTimer) clearTimeout(settleTimer);
-          settleTimer = setTimeout(function () { lockAxis = ''; }, 120);
+        sc.addEventListener('touchend', function () {
+          if (hMode) {
+            suppressClick = true;
+            setTimeout(function () { suppressClick = false; }, 350);
+            let v = vel * 16;
+            if (Math.abs(v) > 1) {
+              const step = function () {
+                sc.scrollLeft -= v;
+                v *= 0.94;
+                if (Math.abs(v) > 0.4) rafId = requestAnimationFrame(step);
+                else rafId = 0;
+              };
+              rafId = requestAnimationFrame(step);
+            }
+          }
+          hMode = false; decided = false;
         }, { passive: true });
-        sc.addEventListener('touchend', function () { gestureOn = false; }, { passive: true });
-        sc.addEventListener('touchcancel', function () { gestureOn = false; lockAxis = ''; }, { passive: true });
+        sc.addEventListener('click', function (e) {
+          if (suppressClick) { e.preventDefault(); e.stopPropagation(); suppressClick = false; }
+        }, true);
       })();
       loadFiles();
     </script>
