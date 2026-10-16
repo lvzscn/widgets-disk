@@ -321,8 +321,8 @@ function getAdminHTML() {
       .fname-text { display: inline-block; white-space: nowrap; will-change: transform; }
       .fname-text.scrolling { animation: fnameScroll 7s ease-in-out infinite alternate; }
       @keyframes fnameScroll {
-        0%, 15% { transform: translateX(0); }
-        85%, 100% { transform: translateX(calc(-1 * var(--dx, 0px))); }
+        0%, 25% { transform: translateX(0); }
+        90%, 100% { transform: translateX(calc(-1 * var(--dx, 0px))); }
       }
       
       /* 操作按钮 */
