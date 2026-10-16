@@ -316,6 +316,14 @@ function getAdminHTML() {
       td { padding: 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; }
       tr:last-child td { border-bottom: none; }
       tr:hover { background-color: #f9fafb; }
+      .col-nowrap { white-space: nowrap; }
+      .fname-box { max-width: 200px; overflow: hidden; white-space: nowrap; }
+      .fname-text { display: inline-block; white-space: nowrap; will-change: transform; }
+      .fname-text.scrolling { animation: fnameScroll 7s ease-in-out infinite alternate; }
+      @keyframes fnameScroll {
+        0%, 15% { transform: translateX(0); }
+        85%, 100% { transform: translateX(calc(-1 * var(--dx, 0px))); }
+      }
       
       /* 操作按钮 */
       .actions { display: flex; gap: 12px; align-items: center; }
@@ -382,9 +390,9 @@ function getAdminHTML() {
         files.forEach(f => {
           tbody.innerHTML += \`
             <tr>
-              <td>\${f.filename}</td>
-              <td>\${(f.size / 1024).toFixed(2)} KB</td>
-              <td>\${new Date(f.upload_time).toLocaleString()}</td>
+              <td><div class="fname-box"><span class="fname-text">\${f.filename}</span></div></td>
+              <td class="col-nowrap">\${(f.size / 1024).toFixed(2)} KB</td>
+              <td class="col-nowrap">\${new Date(f.upload_time).toLocaleString()}</td>
               <td class="actions">
                 <a href="javascript:void(0)" onclick="previewFile('\${f.filename}')">预览</a>
                 <a href="javascript:void(0)" onclick="downloadFile('\${f.filename}')">下载</a>
@@ -392,6 +400,15 @@ function getAdminHTML() {
               </td>
             </tr>
           \`;
+        });
+        document.querySelectorAll('.fname-box').forEach(box => {
+          const span = box.querySelector('.fname-text');
+          const dx = span.scrollWidth - box.clientWidth;
+          if (dx > 4) {
+            span.style.setProperty('--dx', dx + 'px');
+            span.style.animationDuration = Math.max(4, Math.round(dx / 30)) + 's';
+            span.classList.add('scrolling');
+          }
         });
       }
 
