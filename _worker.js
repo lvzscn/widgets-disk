@@ -564,7 +564,8 @@ function getAdminHTML() {
       document.addEventListener('gesturestart', preventGestureZoom);
       function setupImageZoom(viewer, img) {
         let scale = 1, tx = 0, ty = 0;
-        let baseRatio = 1, initialized = false, settling = false;
+        let baseRatio = 1, initialized = false, settling = false, animLayout = false;
+        function effRatio() { return animLayout ? 1 : baseRatio; }
         let startDist = 0, startScale = 1, startTx = 0, startTy = 0, startMidX = 0, startMidY = 0;
         let gestureStart = null, lastTapTime = 0;
         const pointers = new Map();
@@ -605,10 +606,19 @@ function getAdminHTML() {
         function apply(animate) {
           if (animate) settling = true;
           img.style.transition = animate ? 'transform 0.25s ease-out' : 'none';
-          img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + (scale * baseRatio) + ')';
+          img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + (scale * effRatio()) + ')';
         }
         img.addEventListener('transitionend', function (e) {
-          if (e.propertyName === 'transform') { settling = false; img.style.transition = 'none'; }
+          if (e.propertyName === 'transform') {
+            settling = false;
+            img.style.transition = 'none';
+            if (animLayout) {
+              animLayout = false;
+              img.style.width = img.naturalWidth + 'px';
+              img.style.height = img.naturalHeight + 'px';
+              apply(false);
+            }
+          }
         });
         function clampPan() {
           const bw = initialized ? img.naturalWidth * baseRatio : img.clientWidth;
@@ -625,7 +635,15 @@ function getAdminHTML() {
           else if (scale === 1 && (tx !== 0 || ty !== 0)) { tx = 0; ty = 0; apply(true); }
         }
         function toggleZoom() {
-          if (scale > 1) { scale = 1; tx = 0; ty = 0; } else { scale = Math.min(2.5, getMaxScale()); }
+          if (scale > 1) {
+            if (initialized && !animLayout) {
+              img.style.width = (img.naturalWidth * baseRatio) + 'px';
+              img.style.height = (img.naturalHeight * baseRatio) + 'px';
+              animLayout = true;
+              apply(false);
+            }
+            scale = 1; tx = 0; ty = 0;
+          } else { scale = Math.min(2.5, getMaxScale()); }
           clampPan();
           apply(true);
         }
@@ -644,11 +662,16 @@ function getAdminHTML() {
               if (m.indexOf('matrix3d') === 0 && v.length === 16) { cs = v[0]; ex = v[12]; fy = v[13]; }
               else if (v.length === 6) { cs = v[0]; ex = v[4]; fy = v[5]; }
               if (cs > 0) {
-                scale = cs / baseRatio;
+                scale = cs / effRatio();
                 tx = ex + (cs - 1) * (img.offsetWidth / 2);
                 ty = fy + (cs - 1) * (img.offsetHeight / 2);
                 clampPan();
               }
+            }
+            if (animLayout) {
+              animLayout = false;
+              img.style.width = img.naturalWidth + 'px';
+              img.style.height = img.naturalHeight + 'px';
             }
             img.style.transition = 'none';
             apply(false);
