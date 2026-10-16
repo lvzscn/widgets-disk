@@ -294,7 +294,7 @@ function getAdminHTML() {
       .preview-body img { max-width: 100%; display: block; margin: 0 auto; }
       .preview-body.img-mode { padding: 16px; overflow: hidden; }
       .img-viewer { width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; background: #ffffff; }
-      .img-viewer img { max-width: 100%; max-height: 100%; display: block; user-select: none; -webkit-user-select: none; }
+      .img-viewer img { max-width: 100%; max-height: 100%; display: block; user-select: none; -webkit-user-select: none; will-change: transform; -webkit-backface-visibility: hidden; }
       .preview-urlbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb; }
       .preview-url { flex: 1; font-size: 12px; color: #4b5563; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, Menlo, Consolas, monospace; }
       .preview-act { background-color: #ffffff; border: 1px solid #d1d5db; color: #111827; padding: 6px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0; font-size: 0.8125rem; }
@@ -563,6 +563,7 @@ function getAdminHTML() {
           apply(true);
         }
         viewer.addEventListener('pointerdown', function (e) {
+          img.style.transition = 'none';
           try { viewer.setPointerCapture(e.pointerId); } catch (err) {}
           pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
           if (pointers.size === 1) { gestureStart = { t: Date.now(), x: e.clientX, y: e.clientY, multi: false, type: e.pointerType }; }
@@ -584,10 +585,9 @@ function getAdminHTML() {
           } else if (pointers.size === 2 && startDist > 0) {
             const pts = Array.from(pointers.values());
             const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-            scale = Math.min(getMaxScale() * 1.25, Math.max(1, startScale * dist / startDist));
+            scale = Math.min(getMaxScale() * 1.25, Math.max(0.8, startScale * dist / startDist));
             tx = startTx + ((pts[0].x + pts[1].x) / 2 - startMidX);
             ty = startTy + ((pts[0].y + pts[1].y) / 2 - startMidY);
-            if (scale === 1) { tx = 0; ty = 0; }
             clampPan(); apply(false);
           }
         });
@@ -598,6 +598,7 @@ function getAdminHTML() {
           if (pointers.size === 0) {
             const ms = getMaxScale();
             if (scale > ms) { scale = ms; clampPan(); apply(true); }
+            else if (scale < 1) { scale = 1; tx = 0; ty = 0; apply(true); }
             else if (scale === 1 && (tx !== 0 || ty !== 0)) { tx = 0; ty = 0; apply(true); }
             if (wasTracked && gestureStart && !gestureStart.multi && gestureStart.type === 'touch' && e.type === 'pointerup') {
               const dt = Date.now() - gestureStart.t;
@@ -611,7 +612,11 @@ function getAdminHTML() {
           }
         }
         viewer.addEventListener('pointerup', endPointer);
-        viewer.addEventListener('pointercancel', endPointer);
+        viewer.addEventListener('pointercancel', function (e) {
+          pointers.delete(e.pointerId);
+          if (pointers.size < 2) startDist = 0;
+          if (pointers.size === 0) gestureStart = null;
+        });
         viewer.addEventListener('dblclick', function () { toggleZoom(); });
       }
       loadFiles();
