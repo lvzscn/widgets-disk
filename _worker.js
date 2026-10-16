@@ -1,3 +1,4 @@
+// build: 2026-10-17 ghostfix redeploy nudge
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
