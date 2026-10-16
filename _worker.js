@@ -769,11 +769,15 @@ function getAdminHTML() {
         }
         sc.addEventListener('scroll', syncHead, { passive: true });
         let sx = 0, sy = 0, sLeft = 0, maxLeft = 0, hMode = false, decided = false;
-        let curShift = 0, lastX = 0, lastT = 0, vel = 0, rafId = 0, suppressClick = false;
+        let curShift = 0, pendingShift = null, moveRaf = 0, lastX = 0, lastT = 0, vel = 0, rafId = 0, suppressClick = false;
         function applyShift(shift) {
           curShift = shift;
           inner.style.transform = 'translateX(' + (shift + sLeft) + 'px)';
           if (headTable) headTable.style.transform = 'translateX(' + shift + 'px)';
+        }
+        function applyPending() {
+          moveRaf = 0;
+          if (pendingShift !== null) { applyShift(pendingShift); pendingShift = null; }
         }
         function commitShift() {
           const finalLeft = Math.max(0, Math.min(maxLeft, -curShift));
@@ -781,9 +785,12 @@ function getAdminHTML() {
           sc.scrollLeft = finalLeft;
           lastLeft = finalLeft;
           if (headTable) headTable.style.transform = 'translateX(' + (-finalLeft) + 'px)';
+          inner.style.willChange = '';
+          if (headTable) headTable.style.willChange = '';
         }
         sc.addEventListener('touchstart', function (e) {
           if (rafId) { cancelAnimationFrame(rafId); rafId = 0; commitShift(); }
+          if (moveRaf) { cancelAnimationFrame(moveRaf); moveRaf = 0; pendingShift = null; }
           hMode = false; decided = false; vel = 0; suppressClick = false;
           if (e.touches.length !== 1) return;
           const t = e.touches[0];
@@ -797,18 +804,28 @@ function getAdminHTML() {
           if (e.touches.length !== 1) return;
           const t = e.touches[0];
           const dx = t.clientX - sx, dy = t.clientY - sy;
-          if (!decided && Math.max(Math.abs(dx), Math.abs(dy)) > 8) { decided = true; hMode = Math.abs(dx) > Math.abs(dy); }
+          if (!decided && Math.max(Math.abs(dx), Math.abs(dy)) > 8) {
+            decided = true;
+            hMode = Math.abs(dx) > Math.abs(dy);
+            if (hMode) {
+              inner.style.willChange = 'transform';
+              if (headTable) headTable.style.willChange = 'transform';
+            }
+          }
           if (hMode) {
             let shift = dx - sLeft;
             if (shift > 0) shift *= 0.35;
             else if (shift < -maxLeft) shift = -maxLeft + (shift + maxLeft) * 0.35;
-            applyShift(shift);
+            pendingShift = shift;
+            if (!moveRaf) moveRaf = requestAnimationFrame(applyPending);
             const now = Date.now(), dt = now - lastT;
             if (dt > 0) vel = 0.7 * vel + 0.3 * ((t.clientX - lastX) / dt);
             lastX = t.clientX; lastT = now;
           }
         }, { passive: true });
         function endGesture(cancelled) {
+          if (moveRaf) { cancelAnimationFrame(moveRaf); moveRaf = 0; }
+          if (pendingShift !== null) { applyShift(pendingShift); pendingShift = null; }
           if (hMode) {
             suppressClick = true;
             setTimeout(function () { suppressClick = false; }, 350);
