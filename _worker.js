@@ -585,7 +585,27 @@ function getAdminHTML() {
           apply(true);
         }
         viewer.addEventListener('pointerdown', function (e) {
-          img.style.transition = 'none';
+          if (pointers.size === 0) {
+            const m = getComputedStyle(img).transform;
+            if (m && m !== 'none') {
+              const inner = m.substring(m.indexOf('(') + 1, m.lastIndexOf(')'));
+              const nums = inner.match(/-?\d+\.?\d*(e-?\d+)?/g);
+              if (nums) {
+                const v = nums.map(Number);
+                let cs = 0, ex = 0, fy = 0;
+                if (m.indexOf('matrix3d') === 0 && v.length === 16) { cs = v[0]; ex = v[12]; fy = v[13]; }
+                else if (v.length === 6) { cs = v[0]; ex = v[4]; fy = v[5]; }
+                if (cs > 0) {
+                  scale = cs;
+                  tx = ex + (cs - 1) * (img.offsetWidth / 2);
+                  ty = fy + (cs - 1) * (img.offsetHeight / 2);
+                  clampPan();
+                }
+              }
+            }
+            img.style.transition = 'none';
+            apply(false);
+          }
           try { viewer.setPointerCapture(e.pointerId); } catch (err) {}
           pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
           if (pointers.size === 1) { gestureStart = { t: Date.now(), x: e.clientX, y: e.clientY, multi: false, type: e.pointerType }; }
