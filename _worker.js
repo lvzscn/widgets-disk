@@ -563,50 +563,93 @@ function getAdminHTML() {
       document.addEventListener('gesturestart', preventGestureZoom);
       function setupImageZoom(viewer, img) {
         let scale = 1, tx = 0, ty = 0;
-        let settling = false;
+        let baked = 1, fitW = 0, fitH = 0;
+        let settling = false, pendingBake = false, bakeTimer = null;
         let startDist = 0, startScale = 1, startTx = 0, startTy = 0, startMidX = 0, startMidY = 0;
         let gestureStart = null, lastTapTime = 0;
         const pointers = new Map();
+        function measureFit() {
+          if (fitW > 0) return;
+          if (img.clientWidth > 0 && baked > 0) { fitW = img.clientWidth / baked; fitH = img.clientHeight / baked; }
+        }
         function getMaxScale() {
-          if (img.naturalWidth > 0 && img.clientWidth > 0) return Math.max(1, img.naturalWidth / img.clientWidth);
+          measureFit();
+          if (img.naturalWidth > 0 && fitW > 0) return Math.max(1, img.naturalWidth / fitW);
           return 4;
         }
         function apply(animate) {
           if (animate) settling = true;
           img.style.transition = animate ? 'transform 0.25s ease-out' : 'none';
-          img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
+          img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + (scale / baked) + ')';
+        }
+        function doBake() {
+          if (!pendingBake || pointers.size > 0) return;
+          pendingBake = false;
+          if (scale === baked) return;
+          measureFit();
+          if (fitW <= 0) return;
+          if (scale === 1) {
+            img.style.width = ''; img.style.height = '';
+            img.style.maxWidth = ''; img.style.maxHeight = '';
+            baked = 1;
+          } else {
+            img.style.maxWidth = 'none'; img.style.maxHeight = 'none';
+            img.style.width = (fitW * scale) + 'px';
+            img.style.height = (fitH * scale) + 'px';
+            baked = scale;
+          }
+          apply(false);
+        }
+        function planBake() {
+          pendingBake = true;
+          if (bakeTimer) clearTimeout(bakeTimer);
+          bakeTimer = setTimeout(doBake, 320);
         }
         img.addEventListener('transitionend', function (e) {
-          if (e.propertyName === 'transform') { settling = false; img.style.transition = 'none'; }
+          if (e.propertyName === 'transform') {
+            settling = false;
+            img.style.transition = 'none';
+            doBake();
+          }
         });
         function clampPan() {
-          const mx = Math.max(0, (img.clientWidth * scale - viewer.clientWidth) / 2) + 48;
-          const my = Math.max(0, (img.clientHeight * scale - viewer.clientHeight) / 2) + 48;
+          measureFit();
+          const rw = (fitW > 0 ? fitW : img.clientWidth) * scale;
+          const rh = (fitH > 0 ? fitH : img.clientHeight) * scale;
+          const mx = Math.max(0, (rw - viewer.clientWidth) / 2) + 48;
+          const my = Math.max(0, (rh - viewer.clientHeight) / 2) + 48;
           if (tx > mx) tx = mx; if (tx < -mx) tx = -mx;
           if (ty > my) ty = my; if (ty < -my) ty = -my;
         }
+        function settle() {
+          const ms = getMaxScale();
+          if (scale > ms) { scale = ms; clampPan(); apply(true); }
+          else if (scale < 1) { scale = 1; tx = 0; ty = 0; apply(true); }
+          else if (scale === 1 && (tx !== 0 || ty !== 0)) { tx = 0; ty = 0; apply(true); }
+          planBake();
+        }
         function toggleZoom() {
           if (scale > 1) { scale = 1; tx = 0; ty = 0; } else { scale = Math.min(2.5, getMaxScale()); }
+          clampPan();
           apply(true);
+          planBake();
         }
         viewer.addEventListener('pointerdown', function (e) {
+          pendingBake = false;
           if (pointers.size === 0 && settling) {
             settling = false;
             const m = getComputedStyle(img).transform;
             if (m && m !== 'none') {
               const inner = m.substring(m.indexOf('(') + 1, m.lastIndexOf(')'));
-              const nums = inner.match(/-?\d+\.?\d*(e-?\d+)?/g);
-              if (nums) {
-                const v = nums.map(Number);
-                let cs = 0, ex = 0, fy = 0;
-                if (m.indexOf('matrix3d') === 0 && v.length === 16) { cs = v[0]; ex = v[12]; fy = v[13]; }
-                else if (v.length === 6) { cs = v[0]; ex = v[4]; fy = v[5]; }
-                if (cs > 0) {
-                  scale = cs;
-                  tx = ex + (cs - 1) * (img.offsetWidth / 2);
-                  ty = fy + (cs - 1) * (img.offsetHeight / 2);
-                  clampPan();
-                }
+              const v = inner.split(',').map(function (s) { return parseFloat(s); });
+              let cs = 0, ex = 0, fy = 0;
+              if (m.indexOf('matrix3d') === 0 && v.length === 16) { cs = v[0]; ex = v[12]; fy = v[13]; }
+              else if (v.length === 6) { cs = v[0]; ex = v[4]; fy = v[5]; }
+              if (cs > 0) {
+                scale = baked * cs;
+                tx = ex + (cs - 1) * (img.offsetWidth / 2);
+                ty = fy + (cs - 1) * (img.offsetHeight / 2);
+                clampPan();
               }
             }
             img.style.transition = 'none';
@@ -644,10 +687,7 @@ function getAdminHTML() {
           pointers.delete(e.pointerId);
           if (pointers.size < 2) startDist = 0;
           if (pointers.size === 0) {
-            const ms = getMaxScale();
-            if (scale > ms) { scale = ms; clampPan(); apply(true); }
-            else if (scale < 1) { scale = 1; tx = 0; ty = 0; apply(true); }
-            else if (scale === 1 && (tx !== 0 || ty !== 0)) { tx = 0; ty = 0; apply(true); }
+            settle();
             if (wasTracked && gestureStart && !gestureStart.multi && gestureStart.type === 'touch' && e.type === 'pointerup') {
               const dt = Date.now() - gestureStart.t;
               const moved = Math.hypot(e.clientX - gestureStart.x, e.clientY - gestureStart.y);
@@ -663,10 +703,11 @@ function getAdminHTML() {
         viewer.addEventListener('pointercancel', function (e) {
           pointers.delete(e.pointerId);
           if (pointers.size < 2) startDist = 0;
-          if (pointers.size === 0) gestureStart = null;
+          if (pointers.size === 0) { gestureStart = null; settle(); }
         });
         viewer.addEventListener('dblclick', function () { toggleZoom(); });
       }
+
       loadFiles();
     </script>
     <div id="previewOverlay" class="preview-overlay">
