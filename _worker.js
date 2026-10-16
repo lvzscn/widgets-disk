@@ -316,7 +316,7 @@ function getAdminHTML() {
       .upload-btn:hover { background-color: #2563eb; }
       
       /* 表格区 */
-      .table-container { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; background: #ffffff; }
+      .table-container { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: none; background: #ffffff; }
       .thead-wrap { position: sticky; top: 0; z-index: 5; min-width: 680px; background-color: #f9fafb; }
       table { width: 100%; border-collapse: collapse; min-width: 680px; -webkit-text-size-adjust: 100%; table-layout: fixed; }
       th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
