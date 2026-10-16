@@ -277,9 +277,8 @@ function getAdminHTML() {
     <link rel="manifest" href="/manifest.webmanifest?v=892bc065f8">
     <title>文件管理控制台</title>
     <style>
-      html { overscroll-behavior: none; }
-      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px; color: #374151; height: 100vh; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; }
-      .container { max-width: 900px; margin: 0 auto; width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px; color: #374151; }
+      .container { max-width: 900px; margin: 0 auto; width: 100%; }
       
       /* 顶部导航区 */
       .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb; }
@@ -305,8 +304,7 @@ function getAdminHTML() {
       .preview-act { background-color: #ffffff; border: 1px solid #d1d5db; color: #111827; padding: 6px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0; font-size: 0.8125rem; }
 
       /* 卡片样式 */
-      .card { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; border: 1px solid #f3f4f6; flex-shrink: 0; }
-      .list-card { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0; overflow: hidden; }
+      .card { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; border: 1px solid #f3f4f6; }
       
       /* 上传区 */
       .upload-area { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -316,9 +314,8 @@ function getAdminHTML() {
       .upload-btn:hover { background-color: #2563eb; }
       
       /* 表格区 */
-      .table-container { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; background: #ffffff; }
-      .thead-wrap { flex-shrink: 0; overflow: hidden; background-color: #f9fafb; }
-      table { width: 100%; border-collapse: collapse; min-width: 680px; -webkit-text-size-adjust: 100%; table-layout: fixed; }
+      .table-container { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; min-width: 680px; -webkit-text-size-adjust: 100%; }
       th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
       td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; line-height: 20px; }
       td.col-size { min-width: 96px; }
@@ -362,9 +359,9 @@ function getAdminHTML() {
         </div>
       </div>
 
-      <div class="card list-card" style="padding: 0;">
-        <div class="thead-wrap">
-          <table class="head-table">
+      <div class="card" style="padding: 0;">
+        <div class="table-container">
+          <table>
             <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:156px"></colgroup>
             <thead>
               <tr>
@@ -374,11 +371,6 @@ function getAdminHTML() {
                 <th>操作</th>
               </tr>
             </thead>
-          </table>
-        </div>
-        <div class="table-container">
-          <table>
-            <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:156px"></colgroup>
             <tbody id="fileList"></tbody>
           </table>
         </div>
@@ -752,18 +744,6 @@ function getAdminHTML() {
         viewer.addEventListener('dblclick', function () { if (ready) toggleZoom(); });
       }
 
-      (function () {
-        const sc = document.querySelector('.table-container');
-        const headTable = document.querySelector('.head-table');
-        if (!sc || !headTable) return;
-        let lastLeft = -1;
-        sc.addEventListener('scroll', function () {
-          if (sc.scrollLeft !== lastLeft) {
-            lastLeft = sc.scrollLeft;
-            headTable.style.transform = 'translateX(' + (-lastLeft) + 'px)';
-          }
-        }, { passive: true });
-      })();
       loadFiles();
     </script>
     <div id="previewOverlay" class="preview-overlay">
