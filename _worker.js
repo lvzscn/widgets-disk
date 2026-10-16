@@ -292,6 +292,9 @@ function getAdminHTML() {
       .preview-body { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; padding: 16px; }
       .preview-body pre { margin: 0; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; color: #1f2937; }
       .preview-body img { max-width: 100%; display: block; margin: 0 auto; }
+      .preview-body.img-mode { padding: 0; overflow: hidden; }
+      .img-viewer { width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; background: #ffffff; }
+      .img-viewer img { max-width: 100%; max-height: 100%; display: block; user-select: none; -webkit-user-select: none; }
       .preview-urlbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb; }
       .preview-url { flex: 1; font-size: 12px; color: #4b5563; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, Menlo, Consolas, monospace; }
       .preview-act { background-color: #ffffff; border: 1px solid #d1d5db; color: #111827; padding: 6px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0; font-size: 0.8125rem; }
@@ -456,15 +459,24 @@ function getAdminHTML() {
         body.innerHTML = '<div style="color:#6b7280">加载中...</div>';
         overlay.classList.add('open');
         document.body.style.overflow = 'hidden';
+        lockPageZoom();
+        body.classList.remove('img-mode');
         const ext = filename.split('.').pop().toLowerCase();
         const fileUrl = '/widgets/' + encodeURIComponent(filename);
         previewCurrentUrl = location.origin + fileUrl;
         document.getElementById('previewUrl').textContent = previewCurrentUrl;
         if (PREVIEW_IMG_EXTS.indexOf(ext) !== -1) {
+          body.classList.add('img-mode');
           body.innerHTML = '';
+          const viewer = document.createElement('div');
+          viewer.className = 'img-viewer';
           const img = document.createElement('img');
           img.src = fileUrl;
-          body.appendChild(img);
+          img.alt = filename;
+          img.draggable = false;
+          viewer.appendChild(img);
+          body.appendChild(viewer);
+          setupImageZoom(viewer, img);
           return;
         }
         if (PREVIEW_TEXT_EXTS.indexOf(ext) !== -1) {
@@ -522,7 +534,83 @@ function getAdminHTML() {
       }
       function closePreview() {
         document.getElementById('previewOverlay').classList.remove('open');
+        document.getElementById('previewBody').classList.remove('img-mode');
         document.body.style.overflow = '';
+        unlockPageZoom();
+      }
+      let savedViewportContent = null;
+      function preventGestureZoom(e) { e.preventDefault(); }
+      function lockPageZoom() {
+        const vp = document.querySelector('meta[name="viewport"]');
+        if (vp && savedViewportContent === null) {
+          savedViewportContent = vp.getAttribute('content');
+          vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+        }
+        document.addEventListener('gesturestart', preventGestureZoom);
+      }
+      function unlockPageZoom() {
+        const vp = document.querySelector('meta[name="viewport"]');
+        if (vp && savedViewportContent !== null) {
+          vp.setAttribute('content', savedViewportContent);
+          savedViewportContent = null;
+        }
+        document.removeEventListener('gesturestart', preventGestureZoom);
+      }
+      function setupImageZoom(viewer, img) {
+        let scale = 1, tx = 0, ty = 0;
+        let startDist = 0, startScale = 1, startTx = 0, startTy = 0, startMidX = 0, startMidY = 0, lastTap = 0;
+        const pointers = new Map();
+        function apply() { img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')'; }
+        function clampPan() {
+          const mx = Math.max(0, (img.clientWidth * scale - viewer.clientWidth) / 2) + 48;
+          const my = Math.max(0, (img.clientHeight * scale - viewer.clientHeight) / 2) + 48;
+          if (tx > mx) tx = mx; if (tx < -mx) tx = -mx;
+          if (ty > my) ty = my; if (ty < -my) ty = -my;
+        }
+        function toggleZoom() {
+          if (scale > 1) { scale = 1; tx = 0; ty = 0; } else { scale = 2.5; }
+          apply();
+        }
+        viewer.addEventListener('pointerdown', function (e) {
+          try { viewer.setPointerCapture(e.pointerId); } catch (err) {}
+          pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pointers.size === 2) {
+            const pts = Array.from(pointers.values());
+            startDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+            startScale = scale; startTx = tx; startTy = ty;
+            startMidX = (pts[0].x + pts[1].x) / 2; startMidY = (pts[0].y + pts[1].y) / 2;
+          }
+        });
+        viewer.addEventListener('pointermove', function (e) {
+          if (!pointers.has(e.pointerId)) return;
+          const prev = pointers.get(e.pointerId);
+          pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pointers.size === 1 && scale > 1) {
+            tx += e.clientX - prev.x; ty += e.clientY - prev.y;
+            clampPan(); apply();
+          } else if (pointers.size === 2 && startDist > 0) {
+            const pts = Array.from(pointers.values());
+            const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+            scale = Math.min(4, Math.max(1, startScale * dist / startDist));
+            tx = startTx + ((pts[0].x + pts[1].x) / 2 - startMidX);
+            ty = startTy + ((pts[0].y + pts[1].y) / 2 - startMidY);
+            if (scale === 1) { tx = 0; ty = 0; }
+            clampPan(); apply();
+          }
+        });
+        function endPointer(e) {
+          pointers.delete(e.pointerId);
+          if (pointers.size < 2) startDist = 0;
+          if (pointers.size === 0 && scale === 1) { tx = 0; ty = 0; apply(); }
+        }
+        viewer.addEventListener('pointerup', endPointer);
+        viewer.addEventListener('pointercancel', endPointer);
+        viewer.addEventListener('pointerup', function (e) {
+          if (e.pointerType !== 'touch') return;
+          const now = Date.now();
+          if (now - lastTap < 300) { toggleZoom(); lastTap = 0; } else { lastTap = now; }
+        });
+        viewer.addEventListener('dblclick', function () { toggleZoom(); });
       }
       loadFiles();
     </script>
