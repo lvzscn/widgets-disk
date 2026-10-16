@@ -316,8 +316,8 @@ function getAdminHTML() {
       
       /* 表格区 */
       .table-container { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; background: #ffffff; }
-      table { width: 100%; border-collapse: collapse; min-width: 680px; -webkit-text-size-adjust: 100%; }
-      th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+      table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 680px; -webkit-text-size-adjust: 100%; }
+      th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 2; box-shadow: inset 0 -1px 0 #e5e7eb; }
       td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; line-height: 20px; }
       td.col-size { min-width: 96px; }
       td.col-time { min-width: 176px; }
@@ -744,6 +744,34 @@ function getAdminHTML() {
         viewer.addEventListener('dblclick', function () { if (ready) toggleZoom(); });
       }
 
+      (function () {
+        const sc = document.querySelector('.table-container');
+        if (!sc) return;
+        let sx = 0, sy = 0, lockAxis = '', lockLeft = 0, lockTop = 0, gestureOn = false, settleTimer = null;
+        sc.addEventListener('touchstart', function (e) {
+          if (e.touches.length !== 1) { gestureOn = false; lockAxis = ''; return; }
+          const t = e.touches[0];
+          sx = t.clientX; sy = t.clientY;
+          lockLeft = sc.scrollLeft; lockTop = sc.scrollTop;
+          lockAxis = ''; gestureOn = true;
+        }, { passive: true });
+        sc.addEventListener('touchmove', function (e) {
+          if (!gestureOn || lockAxis) return;
+          const t = e.touches[0];
+          const dx = Math.abs(t.clientX - sx), dy = Math.abs(t.clientY - sy);
+          if (Math.max(dx, dy) < 8) return;
+          lockAxis = dy >= dx ? 'y' : 'x';
+        }, { passive: true });
+        sc.addEventListener('scroll', function () {
+          if (!lockAxis) return;
+          if (lockAxis === 'y' && sc.scrollLeft !== lockLeft) sc.scrollLeft = lockLeft;
+          if (lockAxis === 'x' && sc.scrollTop !== lockTop) sc.scrollTop = lockTop;
+          if (settleTimer) clearTimeout(settleTimer);
+          settleTimer = setTimeout(function () { lockAxis = ''; }, 120);
+        }, { passive: true });
+        sc.addEventListener('touchend', function () { gestureOn = false; }, { passive: true });
+        sc.addEventListener('touchcancel', function () { gestureOn = false; lockAxis = ''; }, { passive: true });
+      })();
       loadFiles();
     </script>
     <div id="previewOverlay" class="preview-overlay">
