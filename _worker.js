@@ -318,6 +318,7 @@ function getAdminHTML() {
       /* 表格区 */
       .table-container { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; background: #ffffff; touch-action: pan-y; }
       .thead-wrap { flex-shrink: 0; overflow: hidden; background-color: #f9fafb; }
+      .table-inner { display: inline-block; vertical-align: top; }
       table { width: 100%; border-collapse: collapse; min-width: 680px; -webkit-text-size-adjust: 100%; table-layout: fixed; }
       th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
       td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; line-height: 20px; }
@@ -377,10 +378,12 @@ function getAdminHTML() {
           </table>
         </div>
         <div class="table-container">
+          <div class="table-inner">
           <table>
             <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:156px"></colgroup>
             <tbody id="fileList"></tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>
@@ -755,18 +758,39 @@ function getAdminHTML() {
       (function () {
         const sc = document.querySelector('.table-container');
         const headTable = document.querySelector('.head-table');
-        if (!sc) return;
-        sc.addEventListener('scroll', function () {
-          if (headTable) headTable.style.transform = 'translateX(' + (-sc.scrollLeft) + 'px)';
-        }, { passive: true });
-        let sx = 0, sy = 0, sLeft = 0, hMode = false, decided = false, lastX = 0, lastT = 0, vel = 0, rafId = 0, suppressClick = false;
-        function stopMomentum() { if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } }
+        const inner = document.querySelector('.table-inner');
+        if (!sc || !inner) return;
+        let lastLeft = -1;
+        function syncHead() {
+          if (headTable && sc.scrollLeft !== lastLeft) {
+            lastLeft = sc.scrollLeft;
+            headTable.style.transform = 'translateX(' + (-lastLeft) + 'px)';
+          }
+        }
+        sc.addEventListener('scroll', syncHead, { passive: true });
+        let sx = 0, sy = 0, sLeft = 0, maxLeft = 0, hMode = false, decided = false;
+        let curShift = 0, lastX = 0, lastT = 0, vel = 0, rafId = 0, suppressClick = false;
+        function applyShift(shift) {
+          curShift = shift;
+          inner.style.transform = 'translateX(' + (shift + sLeft) + 'px)';
+          if (headTable) headTable.style.transform = 'translateX(' + shift + 'px)';
+        }
+        function commitShift() {
+          const finalLeft = Math.max(0, Math.min(maxLeft, -curShift));
+          inner.style.transform = '';
+          sc.scrollLeft = finalLeft;
+          lastLeft = finalLeft;
+          if (headTable) headTable.style.transform = 'translateX(' + (-finalLeft) + 'px)';
+        }
         sc.addEventListener('touchstart', function (e) {
-          stopMomentum();
+          if (rafId) { cancelAnimationFrame(rafId); rafId = 0; commitShift(); }
           hMode = false; decided = false; vel = 0; suppressClick = false;
           if (e.touches.length !== 1) return;
           const t = e.touches[0];
-          sx = t.clientX; sy = t.clientY; sLeft = sc.scrollLeft;
+          sx = t.clientX; sy = t.clientY;
+          sLeft = sc.scrollLeft;
+          maxLeft = Math.max(0, sc.scrollWidth - sc.clientWidth);
+          curShift = -sLeft;
           lastX = t.clientX; lastT = Date.now();
         }, { passive: true });
         sc.addEventListener('touchmove', function (e) {
@@ -775,29 +799,36 @@ function getAdminHTML() {
           const dx = t.clientX - sx, dy = t.clientY - sy;
           if (!decided && Math.max(Math.abs(dx), Math.abs(dy)) > 8) { decided = true; hMode = Math.abs(dx) > Math.abs(dy); }
           if (hMode) {
-            sc.scrollLeft = sLeft - dx;
+            let shift = dx - sLeft;
+            if (shift > 0) shift *= 0.35;
+            else if (shift < -maxLeft) shift = -maxLeft + (shift + maxLeft) * 0.35;
+            applyShift(shift);
             const now = Date.now(), dt = now - lastT;
             if (dt > 0) vel = 0.7 * vel + 0.3 * ((t.clientX - lastX) / dt);
             lastX = t.clientX; lastT = now;
           }
         }, { passive: true });
-        sc.addEventListener('touchend', function () {
+        function endGesture(cancelled) {
           if (hMode) {
             suppressClick = true;
             setTimeout(function () { suppressClick = false; }, 350);
-            let v = vel * 16;
-            if (Math.abs(v) > 1) {
-              const step = function () {
-                sc.scrollLeft -= v;
-                v *= 0.94;
-                if (Math.abs(v) > 0.4) rafId = requestAnimationFrame(step);
-                else rafId = 0;
-              };
-              rafId = requestAnimationFrame(step);
-            }
+            let v = cancelled ? 0 : vel * 16;
+            const step = function () {
+              let shift = curShift + v;
+              v *= 0.94;
+              if (shift > 0) { shift *= 0.6; v *= 0.6; }
+              else if (shift < -maxLeft) { shift = -maxLeft + (shift + maxLeft) * 0.6; v *= 0.6; }
+              applyShift(shift);
+              const outBound = curShift > 0.5 || curShift < -maxLeft - 0.5;
+              if (Math.abs(v) > 0.4 || outBound) rafId = requestAnimationFrame(step);
+              else { rafId = 0; commitShift(); }
+            };
+            rafId = requestAnimationFrame(step);
           }
           hMode = false; decided = false;
-        }, { passive: true });
+        }
+        sc.addEventListener('touchend', function () { endGesture(false); }, { passive: true });
+        sc.addEventListener('touchcancel', function () { endGesture(true); }, { passive: true });
         sc.addEventListener('click', function (e) {
           if (suppressClick) { e.preventDefault(); e.stopPropagation(); suppressClick = false; }
         }, true);
