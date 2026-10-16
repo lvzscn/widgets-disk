@@ -313,7 +313,7 @@ function getAdminHTML() {
       .table-container { overflow-x: auto; }
       table { width: 100%; border-collapse: collapse; min-width: 600px; -webkit-text-size-adjust: 100%; }
       th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-      td { padding: 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; }
+      td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; }
       tr:last-child td { border-bottom: none; }
       tr:hover { background-color: #f9fafb; }
       .col-nowrap { white-space: nowrap; }
