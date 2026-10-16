@@ -265,7 +265,7 @@ function getAdminHTML() {
   <html lang="zh-CN">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -292,7 +292,7 @@ function getAdminHTML() {
       .preview-body { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; padding: 16px; }
       .preview-body pre { margin: 0; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; color: #1f2937; }
       .preview-body img { max-width: 100%; display: block; margin: 0 auto; }
-      .preview-body.img-mode { padding: 0; overflow: hidden; }
+      .preview-body.img-mode { padding: 16px; overflow: hidden; }
       .img-viewer { width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; background: #ffffff; }
       .img-viewer img { max-width: 100%; max-height: 100%; display: block; user-select: none; -webkit-user-select: none; }
       .preview-urlbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb; }
@@ -459,7 +459,6 @@ function getAdminHTML() {
         body.innerHTML = '<div style="color:#6b7280">加载中...</div>';
         overlay.classList.add('open');
         document.body.style.overflow = 'hidden';
-        lockPageZoom();
         body.classList.remove('img-mode');
         const ext = filename.split('.').pop().toLowerCase();
         const fileUrl = '/widgets/' + encodeURIComponent(filename);
@@ -536,31 +535,22 @@ function getAdminHTML() {
         document.getElementById('previewOverlay').classList.remove('open');
         document.getElementById('previewBody').classList.remove('img-mode');
         document.body.style.overflow = '';
-        unlockPageZoom();
       }
-      let savedViewportContent = null;
       function preventGestureZoom(e) { e.preventDefault(); }
-      function lockPageZoom() {
-        const vp = document.querySelector('meta[name="viewport"]');
-        if (vp && savedViewportContent === null) {
-          savedViewportContent = vp.getAttribute('content');
-          vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
-        }
-        document.addEventListener('gesturestart', preventGestureZoom);
-      }
-      function unlockPageZoom() {
-        const vp = document.querySelector('meta[name="viewport"]');
-        if (vp && savedViewportContent !== null) {
-          vp.setAttribute('content', savedViewportContent);
-          savedViewportContent = null;
-        }
-        document.removeEventListener('gesturestart', preventGestureZoom);
-      }
+      document.addEventListener('gesturestart', preventGestureZoom);
       function setupImageZoom(viewer, img) {
         let scale = 1, tx = 0, ty = 0;
-        let startDist = 0, startScale = 1, startTx = 0, startTy = 0, startMidX = 0, startMidY = 0, lastTap = 0;
+        let startDist = 0, startScale = 1, startTx = 0, startTy = 0, startMidX = 0, startMidY = 0;
+        let gestureStart = null, lastTapTime = 0;
         const pointers = new Map();
-        function apply() { img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')'; }
+        function getMaxScale() {
+          if (img.naturalWidth > 0 && img.clientWidth > 0) return Math.max(1, img.naturalWidth / img.clientWidth);
+          return 4;
+        }
+        function apply(animate) {
+          img.style.transition = animate ? 'transform 0.25s ease-out' : 'none';
+          img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
+        }
         function clampPan() {
           const mx = Math.max(0, (img.clientWidth * scale - viewer.clientWidth) / 2) + 48;
           const my = Math.max(0, (img.clientHeight * scale - viewer.clientHeight) / 2) + 48;
@@ -568,13 +558,15 @@ function getAdminHTML() {
           if (ty > my) ty = my; if (ty < -my) ty = -my;
         }
         function toggleZoom() {
-          if (scale > 1) { scale = 1; tx = 0; ty = 0; } else { scale = 2.5; }
-          apply();
+          if (scale > 1) { scale = 1; tx = 0; ty = 0; } else { scale = Math.min(2.5, getMaxScale()); }
+          apply(true);
         }
         viewer.addEventListener('pointerdown', function (e) {
           try { viewer.setPointerCapture(e.pointerId); } catch (err) {}
           pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pointers.size === 1) { gestureStart = { t: Date.now(), x: e.clientX, y: e.clientY, multi: false, type: e.pointerType }; }
           if (pointers.size === 2) {
+            if (gestureStart) gestureStart.multi = true;
             const pts = Array.from(pointers.values());
             startDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
             startScale = scale; startTx = tx; startTy = ty;
@@ -587,29 +579,38 @@ function getAdminHTML() {
           pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
           if (pointers.size === 1 && scale > 1) {
             tx += e.clientX - prev.x; ty += e.clientY - prev.y;
-            clampPan(); apply();
+            clampPan(); apply(false);
           } else if (pointers.size === 2 && startDist > 0) {
             const pts = Array.from(pointers.values());
             const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-            scale = Math.min(4, Math.max(1, startScale * dist / startDist));
+            scale = Math.min(getMaxScale() * 1.25, Math.max(1, startScale * dist / startDist));
             tx = startTx + ((pts[0].x + pts[1].x) / 2 - startMidX);
             ty = startTy + ((pts[0].y + pts[1].y) / 2 - startMidY);
             if (scale === 1) { tx = 0; ty = 0; }
-            clampPan(); apply();
+            clampPan(); apply(false);
           }
         });
         function endPointer(e) {
+          const wasTracked = pointers.has(e.pointerId);
           pointers.delete(e.pointerId);
           if (pointers.size < 2) startDist = 0;
-          if (pointers.size === 0 && scale === 1) { tx = 0; ty = 0; apply(); }
+          if (pointers.size === 0) {
+            const ms = getMaxScale();
+            if (scale > ms) { scale = ms; clampPan(); apply(true); }
+            else if (scale === 1 && (tx !== 0 || ty !== 0)) { tx = 0; ty = 0; apply(true); }
+            if (wasTracked && gestureStart && !gestureStart.multi && gestureStart.type === 'touch' && e.type === 'pointerup') {
+              const dt = Date.now() - gestureStart.t;
+              const moved = Math.hypot(e.clientX - gestureStart.x, e.clientY - gestureStart.y);
+              if (dt < 250 && moved < 10) {
+                const now = Date.now();
+                if (now - lastTapTime < 300) { toggleZoom(); lastTapTime = 0; } else { lastTapTime = now; }
+              }
+            }
+            gestureStart = null;
+          }
         }
         viewer.addEventListener('pointerup', endPointer);
         viewer.addEventListener('pointercancel', endPointer);
-        viewer.addEventListener('pointerup', function (e) {
-          if (e.pointerType !== 'touch') return;
-          const now = Date.now();
-          if (now - lastTap < 300) { toggleZoom(); lastTap = 0; } else { lastTap = now; }
-        });
         viewer.addEventListener('dblclick', function () { toggleZoom(); });
       }
       loadFiles();
