@@ -287,7 +287,9 @@ function getAdminHTML() {
       .preview-overlay { position: fixed; inset: 0; background: #ffffff; z-index: 1000; display: none; flex-direction: column; padding-top: env(safe-area-inset-top); box-sizing: border-box; }
       .preview-overlay.open { display: flex; }
       .preview-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; }
-      .preview-title { font-weight: 600; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .preview-title { font-weight: 600; color: #111827; overflow: hidden; white-space: nowrap; }
+      .ptitle-text { display: inline-block; will-change: transform; }
+      .ptitle-text.scrolling { animation: fnameScroll 7s ease-in-out infinite alternate; }
       .preview-close { background-color: #3b82f6; color: white; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; flex-shrink: 0; font-size: 0.875rem; }
       .preview-body { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; padding: 16px; }
       .preview-body pre { margin: 0; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; color: #1f2937; }
@@ -479,9 +481,20 @@ function getAdminHTML() {
       async function previewFile(filename) {
         const overlay = document.getElementById('previewOverlay');
         const body = document.getElementById('previewBody');
-        document.getElementById('previewTitle').textContent = filename;
+        const titleEl = document.getElementById('previewTitle');
+        titleEl.innerHTML = '';
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'ptitle-text';
+        titleSpan.textContent = filename;
+        titleEl.appendChild(titleSpan);
         body.innerHTML = '<div style="color:#6b7280">加载中...</div>';
         overlay.classList.add('open');
+        const tdx = titleEl.scrollWidth - titleEl.clientWidth;
+        if (tdx > 4) {
+          titleSpan.style.setProperty('--dx', tdx + 'px');
+          titleSpan.style.animationDuration = Math.max(4, Math.round(tdx / 30)) + 's';
+          titleSpan.classList.add('scrolling');
+        }
         document.body.style.overflow = 'hidden';
         body.classList.remove('img-mode');
         const ext = filename.split('.').pop().toLowerCase();
