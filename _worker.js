@@ -626,13 +626,24 @@ function getAdminHTML() {
           if (scale > ms) { scale = ms; clampPan(); apply(true); }
           else if (scale < 1) { scale = 1; tx = 0; ty = 0; apply(true); }
           else if (scale === 1 && (tx !== 0 || ty !== 0)) { tx = 0; ty = 0; apply(true); }
-          planBake();
+          if (scale === 1 || scale >= ms - 0.001) planBake();
         }
         function toggleZoom() {
-          if (scale > 1) { scale = 1; tx = 0; ty = 0; } else { scale = Math.min(2.5, getMaxScale()); }
-          clampPan();
-          apply(true);
-          planBake();
+          if (scale > 1) {
+            if (baked !== 1) {
+              baked = 1;
+              img.style.width = ''; img.style.height = '';
+              img.style.maxWidth = ''; img.style.maxHeight = '';
+              apply(false);
+            }
+            scale = 1; tx = 0; ty = 0;
+            apply(true);
+          } else {
+            scale = Math.min(2.5, getMaxScale());
+            clampPan();
+            apply(true);
+            if (scale >= getMaxScale() - 0.001) planBake();
+          }
         }
         viewer.addEventListener('pointerdown', function (e) {
           pendingBake = false;
