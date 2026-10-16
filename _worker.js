@@ -563,61 +563,42 @@ function getAdminHTML() {
       document.addEventListener('gesturestart', preventGestureZoom);
       function setupImageZoom(viewer, img) {
         let scale = 1, tx = 0, ty = 0;
-        let baked = 1, fitW = 0, fitH = 0;
-        let settling = false, pendingBake = false, bakeTimer = null;
+        let baseRatio = 1, initialized = false, settling = false;
         let startDist = 0, startScale = 1, startTx = 0, startTy = 0, startMidX = 0, startMidY = 0;
         let gestureStart = null, lastTapTime = 0;
         const pointers = new Map();
-        function measureFit() {
-          if (fitW > 0) return;
-          if (img.clientWidth > 0 && baked > 0) { fitW = img.clientWidth / baked; fitH = img.clientHeight / baked; }
+        function initLayout() {
+          if (initialized || img.naturalWidth <= 0) return;
+          const vw = viewer.clientWidth, vh = viewer.clientHeight;
+          if (vw <= 0 || vh <= 0) return;
+          baseRatio = Math.min(vw / img.naturalWidth, vh / img.naturalHeight, 1);
+          img.style.maxWidth = 'none'; img.style.maxHeight = 'none';
+          img.style.width = img.naturalWidth + 'px';
+          img.style.height = img.naturalHeight + 'px';
+          initialized = true;
+          apply(false);
         }
+        if (img.complete && img.naturalWidth > 0) initLayout();
+        else img.addEventListener('load', initLayout);
+        if (img.decode) { const p = img.decode(); if (p && p.catch) p.catch(function () {}); }
         function getMaxScale() {
-          measureFit();
-          if (img.naturalWidth > 0 && fitW > 0) return Math.max(1, img.naturalWidth / fitW);
+          if (initialized) return Math.max(1, 1 / baseRatio);
+          if (img.naturalWidth > 0 && img.clientWidth > 0) return Math.max(1, img.naturalWidth / img.clientWidth);
           return 4;
         }
         function apply(animate) {
           if (animate) settling = true;
           img.style.transition = animate ? 'transform 0.25s ease-out' : 'none';
-          img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + (scale / baked) + ')';
-        }
-        function doBake() {
-          if (!pendingBake || pointers.size > 0) return;
-          pendingBake = false;
-          if (scale === baked) return;
-          measureFit();
-          if (fitW <= 0) return;
-          if (scale === 1) {
-            img.style.width = ''; img.style.height = '';
-            img.style.maxWidth = ''; img.style.maxHeight = '';
-            baked = 1;
-          } else {
-            img.style.maxWidth = 'none'; img.style.maxHeight = 'none';
-            img.style.width = (fitW * scale) + 'px';
-            img.style.height = (fitH * scale) + 'px';
-            baked = scale;
-          }
-          apply(false);
-        }
-        function planBake() {
-          pendingBake = true;
-          if (bakeTimer) clearTimeout(bakeTimer);
-          bakeTimer = setTimeout(doBake, 320);
+          img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + (scale * baseRatio) + ')';
         }
         img.addEventListener('transitionend', function (e) {
-          if (e.propertyName === 'transform') {
-            settling = false;
-            img.style.transition = 'none';
-            doBake();
-          }
+          if (e.propertyName === 'transform') { settling = false; img.style.transition = 'none'; }
         });
         function clampPan() {
-          measureFit();
-          const rw = (fitW > 0 ? fitW : img.clientWidth) * scale;
-          const rh = (fitH > 0 ? fitH : img.clientHeight) * scale;
-          const mx = Math.max(0, (rw - viewer.clientWidth) / 2) + 48;
-          const my = Math.max(0, (rh - viewer.clientHeight) / 2) + 48;
+          const bw = initialized ? img.naturalWidth * baseRatio : img.clientWidth;
+          const bh = initialized ? img.naturalHeight * baseRatio : img.clientHeight;
+          const mx = Math.max(0, (bw * scale - viewer.clientWidth) / 2) + 48;
+          const my = Math.max(0, (bh * scale - viewer.clientHeight) / 2) + 48;
           if (tx > mx) tx = mx; if (tx < -mx) tx = -mx;
           if (ty > my) ty = my; if (ty < -my) ty = -my;
         }
@@ -626,27 +607,14 @@ function getAdminHTML() {
           if (scale > ms) { scale = ms; clampPan(); apply(true); }
           else if (scale < 1) { scale = 1; tx = 0; ty = 0; apply(true); }
           else if (scale === 1 && (tx !== 0 || ty !== 0)) { tx = 0; ty = 0; apply(true); }
-          if (scale === 1 || scale >= ms - 0.001) planBake();
         }
         function toggleZoom() {
-          if (scale > 1) {
-            if (baked !== 1) {
-              baked = 1;
-              img.style.width = ''; img.style.height = '';
-              img.style.maxWidth = ''; img.style.maxHeight = '';
-              apply(false);
-            }
-            scale = 1; tx = 0; ty = 0;
-            apply(true);
-          } else {
-            scale = Math.min(2.5, getMaxScale());
-            clampPan();
-            apply(true);
-            if (scale >= getMaxScale() - 0.001) planBake();
-          }
+          if (scale > 1) { scale = 1; tx = 0; ty = 0; } else { scale = Math.min(2.5, getMaxScale()); }
+          clampPan();
+          apply(true);
         }
         viewer.addEventListener('pointerdown', function (e) {
-          pendingBake = false;
+          initLayout();
           if (pointers.size === 0 && settling) {
             settling = false;
             const m = getComputedStyle(img).transform;
@@ -657,7 +625,7 @@ function getAdminHTML() {
               if (m.indexOf('matrix3d') === 0 && v.length === 16) { cs = v[0]; ex = v[12]; fy = v[13]; }
               else if (v.length === 6) { cs = v[0]; ex = v[4]; fy = v[5]; }
               if (cs > 0) {
-                scale = baked * cs;
+                scale = cs / baseRatio;
                 tx = ex + (cs - 1) * (img.offsetWidth / 2);
                 ty = fy + (cs - 1) * (img.offsetHeight / 2);
                 clampPan();
