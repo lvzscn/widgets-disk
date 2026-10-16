@@ -293,7 +293,8 @@ function getAdminHTML() {
       .preview-body pre { margin: 0; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; color: #1f2937; }
       .preview-body img { max-width: 100%; display: block; margin: 0 auto; }
       .preview-body.img-mode { padding: 16px; overflow: hidden; }
-      .img-viewer { width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; background: #ffffff; }
+      .img-viewer { width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; background: #ffffff; position: relative; }
+      .img-loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.55); color: #ffffff; font-size: 13px; padding: 6px 14px; border-radius: 999px; pointer-events: none; z-index: 2; white-space: nowrap; }
       .img-viewer img { max-width: 100%; max-height: 100%; display: block; user-select: none; -webkit-user-select: none; will-change: transform; -webkit-backface-visibility: hidden; }
       .preview-urlbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb; }
       .preview-url { flex: 1; font-size: 12px; color: #4b5563; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, Menlo, Consolas, monospace; }
@@ -578,8 +579,23 @@ function getAdminHTML() {
           initialized = true;
           apply(false);
         }
-        if (img.complete && img.naturalWidth > 0) initLayout();
-        else img.addEventListener('load', initLayout);
+        let ready = false;
+        const badge = document.createElement('div');
+        badge.className = 'img-loading';
+        badge.textContent = '图片加载中…';
+        viewer.appendChild(badge);
+        function markReady() {
+          if (ready) return;
+          ready = true;
+          badge.style.display = 'none';
+          initLayout();
+        }
+        if (img.complete && img.naturalWidth > 0) markReady();
+        else {
+          img.addEventListener('load', markReady);
+          img.addEventListener('error', markReady);
+          setTimeout(markReady, 20000);
+        }
         if (img.decode) { const p = img.decode(); if (p && p.catch) p.catch(function () {}); }
         function getMaxScale() {
           if (initialized) return Math.max(1, 1 / baseRatio);
@@ -614,7 +630,10 @@ function getAdminHTML() {
           apply(true);
         }
         viewer.addEventListener('pointerdown', function (e) {
-          initLayout();
+          if (!ready) {
+            if (img.complete && img.naturalWidth > 0) markReady();
+            else return;
+          }
           if (pointers.size === 0 && settling) {
             settling = false;
             const m = getComputedStyle(img).transform;
@@ -684,7 +703,7 @@ function getAdminHTML() {
           if (pointers.size < 2) startDist = 0;
           if (pointers.size === 0) { gestureStart = null; settle(); }
         });
-        viewer.addEventListener('dblclick', function () { toggleZoom(); });
+        viewer.addEventListener('dblclick', function () { if (ready) toggleZoom(); });
       }
 
       loadFiles();
