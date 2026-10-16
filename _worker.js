@@ -311,14 +311,15 @@ function getAdminHTML() {
       
       /* 表格区 */
       .table-container { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; min-width: 600px; }
+      table { width: 100%; border-collapse: collapse; min-width: 600px; -webkit-text-size-adjust: 100%; }
       th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
       td { padding: 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; }
       tr:last-child td { border-bottom: none; }
       tr:hover { background-color: #f9fafb; }
       .col-nowrap { white-space: nowrap; }
-      .fname-box { max-width: 200px; overflow: hidden; white-space: nowrap; }
-      .fname-text { display: inline-block; white-space: nowrap; will-change: transform; }
+      .fname-cell { position: relative; width: 232px; box-sizing: border-box; }
+      .fname-box { position: absolute; left: 16px; right: 16px; top: 0; bottom: 0; display: flex; align-items: center; overflow: hidden; white-space: nowrap; }
+      .fname-text { display: block; flex: none; white-space: nowrap; will-change: transform; }
       .fname-text.scrolling { animation: fnameScroll 7s ease-in-out infinite alternate; }
       @keyframes fnameScroll {
         0%, 25% { transform: translateX(0); }
@@ -390,7 +391,7 @@ function getAdminHTML() {
         files.forEach(f => {
           tbody.innerHTML += \`
             <tr>
-              <td><div class="fname-box"><span class="fname-text">\${f.filename}</span></div></td>
+              <td class="fname-cell"><div class="fname-box"><span class="fname-text">\${f.filename}</span></div></td>
               <td class="col-nowrap">\${(f.size / 1024).toFixed(2)} KB</td>
               <td class="col-nowrap">\${new Date(f.upload_time).toLocaleString()}</td>
               <td class="actions">
