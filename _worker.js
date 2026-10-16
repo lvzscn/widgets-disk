@@ -563,6 +563,7 @@ function getAdminHTML() {
       document.addEventListener('gesturestart', preventGestureZoom);
       function setupImageZoom(viewer, img) {
         let scale = 1, tx = 0, ty = 0;
+        let settling = false;
         let startDist = 0, startScale = 1, startTx = 0, startTy = 0, startMidX = 0, startMidY = 0;
         let gestureStart = null, lastTapTime = 0;
         const pointers = new Map();
@@ -571,9 +572,13 @@ function getAdminHTML() {
           return 4;
         }
         function apply(animate) {
+          if (animate) settling = true;
           img.style.transition = animate ? 'transform 0.25s ease-out' : 'none';
           img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
         }
+        img.addEventListener('transitionend', function (e) {
+          if (e.propertyName === 'transform') { settling = false; img.style.transition = 'none'; }
+        });
         function clampPan() {
           const mx = Math.max(0, (img.clientWidth * scale - viewer.clientWidth) / 2) + 48;
           const my = Math.max(0, (img.clientHeight * scale - viewer.clientHeight) / 2) + 48;
@@ -585,7 +590,8 @@ function getAdminHTML() {
           apply(true);
         }
         viewer.addEventListener('pointerdown', function (e) {
-          if (pointers.size === 0) {
+          if (pointers.size === 0 && settling) {
+            settling = false;
             const m = getComputedStyle(img).transform;
             if (m && m !== 'none') {
               const inner = m.substring(m.indexOf('(') + 1, m.lastIndexOf(')'));
