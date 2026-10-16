@@ -311,9 +311,11 @@ function getAdminHTML() {
       
       /* 表格区 */
       .table-container { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; min-width: 600px; -webkit-text-size-adjust: 100%; }
+      table { width: 100%; border-collapse: collapse; min-width: 680px; -webkit-text-size-adjust: 100%; }
       th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-      td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; }
+      td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; line-height: 20px; }
+      td.col-size { min-width: 96px; }
+      td.col-time { min-width: 176px; }
       tr:last-child td { border-bottom: none; }
       tr:hover { background-color: #f9fafb; }
       .col-nowrap { white-space: nowrap; }
@@ -327,7 +329,8 @@ function getAdminHTML() {
       }
       
       /* 操作按钮 */
-      .actions { display: flex; gap: 12px; align-items: center; }
+      .actions { display: flex; gap: 12px; align-items: center; white-space: nowrap; min-width: 156px; }
+      .actions > * { flex-shrink: 0; }
       .actions a { color: #3b82f6; text-decoration: none; font-weight: 500; transition: color 0.2s; }
       .actions a:hover { color: #1d4ed8; }
       .actions .delete-btn { color: #ef4444; background: none; border: none; padding: 0; cursor: pointer; font-weight: 500; font-size: 0.875rem; transition: color 0.2s; }
@@ -392,8 +395,8 @@ function getAdminHTML() {
           tbody.innerHTML += \`
             <tr>
               <td class="fname-cell"><div class="fname-box"><span class="fname-text">\${f.filename}</span></div></td>
-              <td class="col-nowrap">\${(f.size / 1024).toFixed(2)} KB</td>
-              <td class="col-nowrap">\${new Date(f.upload_time).toLocaleString()}</td>
+              <td class="col-nowrap col-size">\${(f.size / 1024).toFixed(2)} KB</td>
+              <td class="col-nowrap col-time">\${new Date(f.upload_time).toLocaleString()}</td>
               <td class="actions">
                 <a href="javascript:void(0)" onclick="previewFile('\${f.filename}')">预览</a>
                 <a href="javascript:void(0)" onclick="downloadFile('\${f.filename}')">下载</a>
