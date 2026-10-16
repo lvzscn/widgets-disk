@@ -305,6 +305,7 @@ function getAdminHTML() {
       /* 上传区 */
       .upload-area { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
       input[type="file"] { flex: 1; min-width: 200px; padding: 10px; border: 1px dashed #d1d5db; border-radius: 8px; background: #f9fafb; cursor: pointer; color: #6b7280; }
+      input[type="file"]::-webkit-file-upload-button, input[type="file"]::file-selector-button { background-color: #ffffff; border: 1px solid #d1d5db; color: #111827; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.875rem; margin-right: 10px; }
       .upload-btn { background-color: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: background-color 0.2s; white-space: nowrap; }
       .upload-btn:hover { background-color: #2563eb; }
       
