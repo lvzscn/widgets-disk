@@ -23,6 +23,10 @@ export default {
         headers.set('Content-Type', 'application/octet-stream');
       } else {
         headers.set('Content-Type', getContentType(filename));
+        // 给裸文件带上文件名身份：浏览器靠这个头给源文件显示文件名（inline = 照常在浏览器里打开，不触发下载）
+        // 备用 filename 只放 ASCII，真名走 filename* 编码通道（中文名直接塞头值会报错）
+        const asciiName = filename.replace(/[^\x20-\x7E]/g, '_').replace(/["\\]/g, '_');
+        headers.set('Content-Disposition', 'inline; filename="' + asciiName + '"; filename*=UTF-8\'\'' + encodeURIComponent(filename).replace(/'/g, '%27'));
         headers.set('Cache-Control', 'public, max-age=3600');
       }
 
