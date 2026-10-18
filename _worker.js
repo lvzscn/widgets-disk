@@ -29,6 +29,76 @@ export default {
       return new Response(fileContent, { headers });
     }
 
+    // 1b. 查看页（公开）：给文件套一个本站网页外壳——标题=文件名、带站点图标；
+    // 裸文件本身没有标题/图标信息，Safari 打开直链时只能拿域名或网址顶替标题。
+    // 裸直链 /widgets/ 一个字不动，Forward 等靠直链拉模块不受影响。
+    if (method === 'GET' && path.startsWith('/view/')) {
+      const filename = decodeURIComponent(path.replace('/view/', ''));
+      const buf = await env.FILE_KV.get(filename, { type: 'arrayBuffer' });
+      if (buf === null) {
+        return new Response('File not found', { status: 404 });
+      }
+      const escHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const contentType = getContentType(filename);
+      const rawUrl = '/widgets/' + encodeURIComponent(filename);
+      const dlUrl = '/download/' + encodeURIComponent(filename);
+      const nameHtml = escHtml(filename);
+      let contentHtml;
+      if (contentType.startsWith('image/')) {
+        contentHtml = '<img class="view-img" src="' + rawUrl + '" alt="' + nameHtml + '">';
+      } else if (contentType.startsWith('video/')) {
+        contentHtml = '<video class="view-media" src="' + rawUrl + '" controls playsinline></video>';
+      } else if (contentType.startsWith('audio/')) {
+        contentHtml = '<audio class="view-media" src="' + rawUrl + '" controls></audio>';
+      } else if (contentType.startsWith('text/') || contentType.startsWith('application/javascript') || contentType.startsWith('application/json') || contentType.startsWith('application/xml')) {
+        if (buf.byteLength > 2 * 1024 * 1024) {
+          contentHtml = '<div class="view-note">文件较大（' + (buf.byteLength / 1024 / 1024).toFixed(1) + ' MB），此页不展开源码，请用「打开原文件」或「下载」。</div>';
+        } else {
+          contentHtml = '<pre class="view-code">' + escHtml(new TextDecoder().decode(buf)) + '</pre>';
+        }
+      } else {
+        contentHtml = '<div class="view-note">此类型不支持在线查看，请用「打开原文件」或「下载」。</div>';
+      }
+      const page = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${nameHtml}</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="文件管理">
+<meta name="theme-color" content="#3b82f6">
+<link rel="apple-touch-icon" href="/icon-180.png?v=892bc065f8">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=892bc065f8">
+<link rel="manifest" href="/manifest.webmanifest?v=892bc065f8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f3f4f6; color: #1f2937; }
+.view-bar { position: sticky; top: 0; z-index: 5; background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+.view-back { color: #3b82f6; text-decoration: none; font-size: 14px; white-space: nowrap; }
+.view-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.view-btn { background: #3b82f6; color: #fff; text-decoration: none; font-size: 13px; padding: 6px 12px; border-radius: 8px; white-space: nowrap; }
+.view-btn.ghost { background: #eef2ff; color: #3b82f6; }
+.view-main { max-width: 900px; margin: 0 auto; padding: 14px; }
+.view-img { display: block; max-width: 100%; height: auto; margin: 0 auto; background: #fff; border-radius: 12px; }
+.view-media { display: block; width: 100%; margin: 0 auto; }
+.view-code { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.55; white-space: pre; overflow: auto; -webkit-overflow-scrolling: touch; }
+.view-note { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 22px 16px; font-size: 14px; color: #4b5563; text-align: center; }
+</style>
+</head>
+<body>
+<div class="view-bar">
+<a class="view-back" href="/">← 面板</a>
+<div class="view-name">${nameHtml}</div>
+<a class="view-btn ghost" href="${rawUrl}" target="_blank" rel="noopener">原文件</a>
+<a class="view-btn" href="${dlUrl}">下载</a>
+</div>
+<div class="view-main">${contentHtml}</div>
+</body>
+</html>`;
+      return new Response(page, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
 
     // PWA 资源（公开）：manifest 与应用图标
     if (method === "GET") {
