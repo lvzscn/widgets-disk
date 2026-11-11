@@ -753,6 +753,7 @@ function getAdminHTML() {
 
       function setFilter(f) {
         currentFilter = f;
+        if (f === 'all' && currentPath) currentPath = '';
         document.querySelectorAll('#chips .chip').forEach(function (c) {
           c.classList.toggle('active', c.getAttribute('data-filter') === f);
         });
