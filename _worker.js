@@ -438,6 +438,11 @@ function getAdminHTML() {
       .folder-card .fc-count { font-size: 12px; color: #6b7280; flex-shrink: 0; }
       .folder-card .fc-more { background: none; border: none; color: #6b7280; font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
       .folder-card .fc-more.active { background: #dbeafe; color: #1d4ed8; border-radius: 8px; }
+      .folder-card.fc-c0 .fc-more.active { background: #b3d1a8; color: #2d5a27; }
+      .folder-card.fc-c1 .fc-more.active { background: #f0d68a; color: #854d0e; }
+      .folder-card.fc-c2 .fc-more.active { background: #a8c8f0; color: #1d4ed8; }
+      .folder-card.fc-c3 .fc-more.active { background: #f2b3cc; color: #9d174d; }
+      .folder-card.fc-c4 .fc-more.active { background: #c6b6ef; color: #5b21b6; }
       .fc-c0 { background: #dcead9; }
       .fc-c1 { background: #fdeec2; }
       .fc-c2 { background: #d6e9fb; }
