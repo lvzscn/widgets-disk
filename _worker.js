@@ -383,14 +383,124 @@ function getAdminHTML() {
     <title>文件管理控制台</title>
     <style>
       html { overscroll-behavior: none; }
-      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px; color: #374151; height: 100vh; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; }
-      .container { max-width: 900px; margin: 0 auto; width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; }
-      
-      /* 顶部导航区 */
-      .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb; }
-      .header h2 { margin: 0; color: #111827; display: flex; align-items: center; gap: 8px; }
-      .logout-btn { background-color: white; color: #4b5563; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.875rem; }
-      .logout-btn:hover { background-color: #f3f4f6; color: #111827; }
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #eef3f9; margin: 0; padding: 0; color: #1f2937; height: 100vh; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; }
+      .app { max-width: 560px; margin: 0 auto; width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 16px 0; box-sizing: border-box; }
+
+      /* 搜索条 */
+      .search-wrap { flex-shrink: 0; }
+      .search-wrap input { width: 100%; box-sizing: border-box; border: none; outline: none; background: #e6ebf2; border-radius: 999px; padding: 13px 16px; font-size: 15px; color: #111827; text-align: center; }
+      .search-wrap input::placeholder { color: #6b7280; }
+
+      /* 品牌与用量 */
+      .brand-row { display: flex; justify-content: space-between; align-items: flex-end; margin: 20px 4px 0; flex-shrink: 0; }
+      .brand { font-size: 27px; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
+      .usage { font-size: 13px; color: #6b7280; margin-top: 4px; }
+      .usage b { color: #ef4444; font-weight: 700; }
+
+      /* 筛选 chips */
+      .chips { display: flex; gap: 10px; margin: 16px 0 4px; flex-shrink: 0; }
+      .chip { border: 1px solid #e5e7eb; background: #ffffff; color: #374151; border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
+      .chip.active { background: #ff5a3c; border-color: transparent; color: #ffffff; }
+
+      /* 面包屑 */
+      .crumb-bar { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; flex-shrink: 0; min-height: 30px; }
+      .back-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #e5e7eb; background: #ffffff; color: #374151; font-size: 18px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+      .crumbs { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #6b7280; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+      .crumbs::-webkit-scrollbar { display: none; }
+      .crumbs a { color: #3b82f6; text-decoration: none; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+      .crumbs .crumb-sep { color: #9ca3af; flex-shrink: 0; }
+      .crumbs .crumb-now { color: #111827; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+
+      /* 滚动内容区 */
+      .scroll-area { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: none; padding-bottom: 104px; }
+      .sec-title { display: flex; justify-content: space-between; align-items: baseline; font-size: 17px; font-weight: 700; color: #111827; margin: 20px 2px 12px; }
+      .sec-title .sec-more { font-size: 13px; font-weight: 500; color: #9ca3af; cursor: pointer; }
+
+      /* 最近文件大卡 */
+      .recent-card { background: linear-gradient(135deg, #7db9f2, #4a90e2); border-radius: 22px; padding: 22px; color: #ffffff; position: relative; overflow: hidden; cursor: pointer; }
+      .recent-card .rc-icon { font-size: 34px; opacity: 0.85; }
+      .recent-card .rc-name { font-size: 24px; font-weight: 800; margin-top: 34px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+      .recent-card .rc-meta { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 14px; }
+      .recent-card .rc-sub { font-size: 12px; opacity: 0.85; line-height: 1.5; }
+      .recent-card .rc-open { background: #ffffff; color: #111827; border: none; border-radius: 999px; padding: 10px 22px; font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+
+      /* 文件夹卡片 */
+      .folder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .folder-card { border-radius: 18px; padding: 18px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; min-height: 62px; box-sizing: border-box; position: relative; }
+      .folder-card .fc-icon { font-size: 26px; flex-shrink: 0; }
+      .folder-card .fc-name { font-weight: 700; color: #111827; font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; min-width: 0; }
+      .folder-card .fc-count { font-size: 12px; color: #6b7280; flex-shrink: 0; }
+      .folder-card .fc-more { background: none; border: none; color: #6b7280; font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+      .fc-c0 { background: #dcead9; }
+      .fc-c1 { background: #fdeec2; }
+      .fc-c2 { background: #d6e9fb; }
+      .fc-c3 { background: #fbdce8; }
+      .fc-c4 { background: #e3ddf7; }
+      .folder-actions { display: none; grid-column: 1 / -1; gap: 10px; }
+      .folder-actions.open { display: flex; }
+      .folder-actions button { flex: 1; border: 1px solid #e5e7eb; background: #ffffff; border-radius: 12px; padding: 10px; font-size: 14px; font-weight: 600; color: #374151; cursor: pointer; }
+
+      /* 文件行 */
+      .file-row { border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; cursor: pointer; }
+      .file-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 21px; flex-shrink: 0; }
+      .file-meta { flex: 1; min-width: 0; }
+      .file-name { font-weight: 600; color: #111827; font-size: 15px; overflow: hidden; white-space: nowrap; }
+      .fname-text { display: inline-block; will-change: transform; }
+      .fname-text.scrolling { animation: fnameScroll 7s ease-in-out infinite alternate; }
+      .file-sub { font-size: 12px; color: #6b7280; margin-top: 3px; }
+      .file-more { background: none; border: none; color: #9ca3af; font-size: 20px; cursor: pointer; padding: 6px 2px; flex-shrink: 0; }
+      .file-actions { display: none; margin: -2px 0 10px; padding: 12px 14px; background: #ffffff; border-radius: 18px; gap: 12px; justify-content: flex-end; }
+      .file-actions.open { display: flex; }
+      .act-btn { width: 42px; height: 42px; border-radius: 50%; border: none; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+      .act-link { background: #f6c453; }
+      .act-dl { background: #1e3a5f; color: #ffffff; }
+      .act-move { background: #ffffff; border: 1px solid #e5e7eb; }
+      .act-del { background: #ef4444; color: #ffffff; }
+      @keyframes fnameScroll {
+        0%, 25% { transform: translateX(0); }
+        90%, 100% { transform: translateX(calc(-1 * var(--dx, 0px))); }
+      }
+
+      /* 类型配色（行背景 / 图标底） */
+      .t-img { background: #e3f2e1; } .t-img .file-icon { background: #8fce8f; }
+      .t-vid { background: #ece5f8; } .t-vid .file-icon { background: #b39ddb; }
+      .t-aud { background: #fde8ef; } .t-aud .file-icon { background: #f2a7c3; }
+      .t-doc { background: #dbeafe; } .t-doc .file-icon { background: #7db8f7; }
+      .t-code { background: #e5e7eb; } .t-code .file-icon { background: #9ca3af; }
+      .t-zip { background: #fef3c7; } .t-zip .file-icon { background: #f6c453; }
+      .t-other { background: #f3f4f6; } .t-other .file-icon { background: #d1d5db; }
+
+      .empty-state { text-align: center; padding: 40px 16px; color: #6b7280; font-size: 14px; }
+
+      /* 底部导航 */
+      .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: rgba(255,255,255,0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; align-items: center; padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); box-sizing: border-box; }
+      .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 18px; color: #6b7280; cursor: pointer; padding: 4px 10px; }
+      .nav-item span { font-size: 11px; font-weight: 600; }
+      .nav-plus { width: 54px; height: 54px; border-radius: 50%; border: none; background: #111827; color: #ffffff; font-size: 28px; line-height: 1; cursor: pointer; margin-top: -26px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); flex-shrink: 0; }
+
+      /* 底部动作菜单 */
+      .sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 60; display: none; }
+      .sheet-backdrop.open { display: block; }
+      .action-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 61; background: #ffffff; border-radius: 24px 24px 0 0; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); transform: translateY(105%); transition: transform 0.25s ease-out; box-sizing: border-box; max-width: 560px; margin: 0 auto; }
+      .action-sheet.open { transform: translateY(0); }
+      .sheet-btn { display: block; width: 100%; border: 1px solid #e5e7eb; background: #f9fafb; border-radius: 14px; padding: 15px; font-size: 16px; font-weight: 600; color: #111827; cursor: pointer; margin-bottom: 10px; text-align: left; }
+      .sheet-cancel { display: block; width: 100%; border: none; background: none; border-radius: 14px; padding: 13px; font-size: 15px; font-weight: 600; color: #6b7280; cursor: pointer; }
+
+      /* 存储弹窗 */
+      .storage-modal { position: fixed; inset: 0; z-index: 62; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; }
+      .storage-modal.open { display: flex; }
+      .storage-card { background: #ffffff; border-radius: 20px; padding: 22px; width: 100%; max-width: 420px; box-sizing: border-box; }
+      .storage-title { font-size: 18px; font-weight: 800; color: #111827; margin-bottom: 6px; }
+      .storage-total { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
+      .storage-row { margin-bottom: 14px; }
+      .storage-row .sr-top { display: flex; justify-content: space-between; font-size: 14px; color: #374151; margin-bottom: 6px; }
+      .storage-row .sr-top b { color: #111827; }
+      .storage-bar { height: 8px; border-radius: 999px; background: #eef2f7; overflow: hidden; }
+      .storage-bar i { display: block; height: 100%; border-radius: 999px; }
+
+      .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 70; background: rgba(17,24,39,0.92); color: #ffffff; font-size: 14px; padding: 10px 18px; border-radius: 999px; white-space: nowrap; display: none; pointer-events: none; }
+
+      /* 预览（原样保留） */
       .preview-overlay { position: fixed; inset: 0; background: #ffffff; z-index: 1000; display: none; flex-direction: column; padding-top: env(safe-area-inset-top); box-sizing: border-box; }
       .preview-overlay.open { display: flex; }
       .preview-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; }
@@ -408,100 +518,62 @@ function getAdminHTML() {
       .preview-urlbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb; }
       .preview-url { flex: 1; font-size: 12px; color: #4b5563; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, Menlo, Consolas, monospace; }
       .preview-act { background-color: #ffffff; border: 1px solid #d1d5db; color: #111827; padding: 6px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0; font-size: 0.8125rem; }
-
-      /* 卡片样式 */
-      .card { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; border: 1px solid #f3f4f6; flex-shrink: 0; }
-      .list-card { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0; overflow: hidden; }
-      
-      /* 上传区 */
-      .upload-area { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-      input[type="file"] { flex: 1; min-width: 200px; padding: 10px; border: 1px dashed #d1d5db; border-radius: 8px; background: #f9fafb; cursor: pointer; color: #6b7280; }
-      input[type="file"]::-webkit-file-upload-button, input[type="file"]::file-selector-button { background-color: #ffffff; border: 1px solid #d1d5db; color: #111827; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.875rem; margin-right: 10px; }
-      .upload-btn { background-color: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: background-color 0.2s; white-space: nowrap; }
-      .upload-btn:hover { background-color: #2563eb; }
-      
-      /* 表格区 */
-      .table-container { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: none; background: #ffffff; }
-      .thead-wrap { position: sticky; top: 0; z-index: 5; min-width: 704px; background-color: #f9fafb; }
-      table { width: 100%; border-collapse: collapse; min-width: 704px; -webkit-text-size-adjust: 100%; table-layout: fixed; }
-      th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-      td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; line-height: 20px; }
-      td.col-size { min-width: 96px; }
-      td.col-time { min-width: 176px; }
-      tr:last-child td { border-bottom: none; }
-      tr:hover { background-color: #f9fafb; }
-      .col-nowrap { white-space: nowrap; }
-      .fname-cell { position: relative; width: 232px; box-sizing: border-box; }
-      .fname-box { position: absolute; left: 16px; right: 16px; top: 0; bottom: 0; display: flex; align-items: center; overflow: hidden; white-space: nowrap; }
-      .fname-text { display: block; flex: none; white-space: nowrap; will-change: transform; }
-      .fname-text.scrolling { animation: fnameScroll 7s ease-in-out infinite alternate; }
-      @keyframes fnameScroll {
-        0%, 25% { transform: translateX(0); }
-        90%, 100% { transform: translateX(calc(-1 * var(--dx, 0px))); }
-      }
-      
-      /* 操作按钮 */
-      .actions { white-space: nowrap; min-width: 180px; }
-      .actions-in { display: flex; gap: 12px; align-items: center; }
-      .actions-in > * { flex-shrink: 0; }
-      .actions a { color: #3b82f6; text-decoration: none; font-weight: 500; transition: color 0.2s; }
-      .actions a:hover { color: #1d4ed8; }
-      .actions .delete-btn { color: #ef4444; background: none; border: none; padding: 0; cursor: pointer; font-weight: 500; font-size: 0.875rem; transition: color 0.2s; }
-      .actions .delete-btn:hover { color: #b91c1c; }
-      
-      .empty-state { text-align: center; padding: 40px; color: #6b7280; }
-      
-      /* 面包屑与新建文件夹 */
-      .crumb-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
-      .crumbs { display: flex; align-items: center; gap: 6px; font-size: 0.875rem; color: #6b7280; overflow: hidden; white-space: nowrap; min-width: 0; }
-      .crumbs a { color: #3b82f6; text-decoration: none; font-weight: 500; cursor: pointer; flex-shrink: 0; }
-      .crumbs .crumb-sep { color: #9ca3af; flex-shrink: 0; }
-      .crumbs .crumb-now { color: #111827; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
-      .new-folder-btn { background-color: #ffffff; border: 1px solid #d1d5db; color: #111827; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.875rem; white-space: nowrap; flex-shrink: 0; }
-      .new-folder-btn:hover { background-color: #f3f4f6; }
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="header">
-        <h2>📦 <span>𝙒𝙞𝙙𝙜𝙚𝙩𝙨 𝘿𝙞𝙨𝙠</span></h2>
-        <button class="logout-btn" onclick="logout()">退出登录</button>
+    <div class="app">
+      <div class="search-wrap">
+        <input id="searchInput" type="search" placeholder="🔍 Search" oninput="onSearch()">
       </div>
-
-      <div class="card">
-        <div class="upload-area">
-          <input type="file" id="fileInput" accept="*/*" multiple onchange="onFilesChosen()" />
-          <button class="upload-btn" onclick="uploadFile()">上传文件</button>
-          <span id="chosenTip" style="font-size: 0.875rem; color: #6b7280;"></span>
+      <div class="brand-row">
+        <div>
+          <div class="brand">☁️ Widgets Disk</div>
+          <div class="usage" id="usageLine"></div>
         </div>
       </div>
-
-      <div class="card list-card" style="padding: 0;">
-        <div class="crumb-bar">
-          <div class="crumbs" id="crumbs"></div>
-          <button class="new-folder-btn" onclick="createFolder()">＋ 新建文件夹</button>
-        </div>
-        <div class="table-container">
-          <div class="thead-wrap">
-          <table class="head-table">
-            <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:180px"></colgroup>
-            <thead>
-              <tr>
-                <th>文件名</th>
-                <th>大小</th>
-                <th>上传时间</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-          </table>
-          </div>
-          <table>
-            <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:180px"></colgroup>
-            <tbody id="fileList"></tbody>
-          </table>
-        </div>
+      <div class="chips" id="chips">
+        <button class="chip active" data-filter="all" onclick="setFilter('all')">All</button>
+        <button class="chip" data-filter="folder" onclick="setFilter('folder')">📁 Folder</button>
+        <button class="chip" data-filter="file" onclick="setFilter('file')">📄 文件</button>
+      </div>
+      <div class="crumb-bar" id="crumbBar">
+        <button class="back-btn" id="backBtn" onclick="goUp()" style="display:none">‹</button>
+        <div class="crumbs" id="crumbs"></div>
+      </div>
+      <div class="scroll-area" id="scrollArea">
+        <div id="recentSection"></div>
+        <div id="folderSection"></div>
+        <div id="fileSection"></div>
+        <div id="emptyState" class="empty-state" style="display:none"></div>
       </div>
     </div>
+
+    <nav class="bottom-nav">
+      <button class="nav-item" onclick="goToPath('')">🏠<span>首页</span></button>
+      <button class="nav-item" onclick="openStorage()">📊<span>存储</span></button>
+      <button class="nav-plus" onclick="openSheet()">＋</button>
+      <button class="nav-item" onclick="focusSearch()">🔍<span>搜索</span></button>
+      <button class="nav-item" onclick="logout()">🚪<span>退出</span></button>
+    </nav>
+
+    <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
+    <div class="action-sheet" id="actionSheet">
+      <button class="sheet-btn" onclick="pickFiles()">📤 上传文件</button>
+      <button class="sheet-btn" onclick="sheetCreateFolder()">📁 新建文件夹</button>
+      <button class="sheet-cancel" onclick="closeSheet()">取消</button>
+    </div>
+
+    <div class="storage-modal" id="storageModal" onclick="if(event.target===this)closeStorage()">
+      <div class="storage-card">
+        <div class="storage-title">存储用量</div>
+        <div class="storage-total" id="storageTotal"></div>
+        <div id="storageBody"></div>
+        <button class="sheet-cancel" onclick="closeStorage()">关闭</button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <input type="file" id="fileInput" accept="*/*" multiple style="display:none" onchange="onFilesChosen()">
 
     <script>
       async function logout() {
@@ -511,9 +583,35 @@ function getAdminHTML() {
 
       let currentPath = '';
       let allFilesCache = [];
+      let currentFilter = 'all';
+      let searchQuery = '';
+      let viewFiles = [];
+      let viewFolders = [];
+      let folderActionTarget = null;
+
+      function fmtSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+        return (bytes / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+      }
+
+      function fileTypeInfo(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'bmp', 'heic'].indexOf(ext) !== -1) return { cls: 't-img', icon: '🖼️' };
+        if (['mp4', 'mov', 'avi', 'mkv', 'webm'].indexOf(ext) !== -1) return { cls: 't-vid', icon: '🎬' };
+        if (['mp3', 'wav', 'flac', 'aac', 'ogg'].indexOf(ext) !== -1) return { cls: 't-aud', icon: '🎵' };
+        if (['pdf'].indexOf(ext) !== -1) return { cls: 't-doc', icon: '📕' };
+        if (['doc', 'docx', 'txt', 'md', 'xls', 'xlsx', 'ppt', 'pptx'].indexOf(ext) !== -1) return { cls: 't-doc', icon: '📄' };
+        if (['js', 'json', 'html', 'css', 'xml', 'fwd', 'rex', 'csv', 'log'].indexOf(ext) !== -1) return { cls: 't-code', icon: '💻' };
+        if (['zip', 'rar', '7z', 'tar', 'gz'].indexOf(ext) !== -1) return { cls: 't-zip', icon: '📦' };
+        return { cls: 't-other', icon: '📄' };
+      }
 
       function renderCrumbs() {
         const el = document.getElementById('crumbs');
+        const backBtn = document.getElementById('backBtn');
+        backBtn.style.display = currentPath ? '' : 'none';
         el.innerHTML = '';
         const segs = currentPath ? currentPath.split('/') : [];
         const root = document.createElement('a');
@@ -546,78 +644,160 @@ function getAdminHTML() {
         loadFiles();
       }
 
+      function goUp() {
+        if (!currentPath) return;
+        const i = currentPath.lastIndexOf('/');
+        goToPath(i === -1 ? '' : currentPath.slice(0, i));
+      }
+
       function enterFolder(enc) { goToPath(enc ? decodeURIComponent(enc) : ''); }
+
+      function setFilter(f) {
+        currentFilter = f;
+        document.querySelectorAll('#chips .chip').forEach(function (c) {
+          c.classList.toggle('active', c.getAttribute('data-filter') === f);
+        });
+        renderAll();
+      }
+
+      function onSearch() {
+        searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+        renderAll();
+      }
+
+      function focusSearch() {
+        document.getElementById('searchInput').focus();
+        document.getElementById('scrollArea').scrollTop = 0;
+      }
+
+      function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.display = 'block';
+        clearTimeout(t._timer);
+        t._timer = setTimeout(function () { t.style.display = 'none'; }, 2200);
+      }
 
       async function loadFiles() {
         const res = await fetch('/api/files');
-        if(res.status === 401) return window.location.reload(); // 登录失效自动刷新
-        if(!res.ok) return alert('读取文件列表失败');
-        
-        const files = await res.json();
-        allFilesCache = files;
-        renderCrumbs();
-        const tbody = document.getElementById('fileList');
+        if (res.status === 401) return window.location.reload();
+        if (!res.ok) return alert('读取文件列表失败');
+        allFilesCache = await res.json();
+        renderAll();
+      }
+
+      function currentView() {
         const prefix = currentPath ? currentPath + '/' : '';
         const folderMap = {};
-        const showFiles = [];
-        files.forEach(function (f) {
+        const files = [];
+        allFilesCache.forEach(function (f) {
           const name = f.filename;
           if (name.indexOf(prefix) !== 0) return;
           const rest = name.slice(prefix.length);
           if (!rest || rest === '.keep') return;
-          if (rest.slice(-6) === '/.keep') {
-            folderMap[rest.slice(0, -6).split('/')[0]] = true;
-            return;
-          }
-          if (rest.indexOf('/') !== -1) {
-            folderMap[rest.split('/')[0]] = true;
-            return;
-          }
-          showFiles.push({ name: rest, full: name, size: f.size, time: f.upload_time });
+          if (rest.slice(-6) === '/.keep') { folderMap[rest.slice(0, -6).split('/')[0]] = true; return; }
+          if (rest.indexOf('/') !== -1) { folderMap[rest.split('/')[0]] = true; return; }
+          files.push({ name: rest, full: name, size: f.size, time: f.upload_time });
         });
-        const folderNames = Object.keys(folderMap).sort();
-        if (folderNames.length === 0 && showFiles.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">' + (currentPath ? '此文件夹为空' : '暂无文件，请在上方上传') + '</div></td></tr>';
-          return;
-        }
-        tbody.innerHTML = '';
-        folderNames.forEach(function (fname) {
+        let folders = Object.keys(folderMap).sort().map(function (fname) {
           const full = prefix + fname;
           let count = 0;
-          files.forEach(function (f) {
+          allFilesCache.forEach(function (f) {
             if (f.filename.indexOf(full + '/') === 0 && f.filename.slice(-6) !== '/.keep') count++;
           });
-          const enc = encodeURIComponent(full);
-          tbody.innerHTML += \`
-            <tr>
-              <td class="fname-cell"><div class="fname-box"><span class="fname-text">📁 \${fname}</span></div></td>
-              <td class="col-nowrap col-size">\${count} 个文件</td>
-              <td class="col-nowrap col-time">—</td>
-              <td class="actions"><div class="actions-in">
-                <a href="javascript:void(0)" onclick="enterFolder('\${enc}')">进入</a>
-                <a href="javascript:void(0)" onclick="renameFolder('\${enc}')">改名</a>
-                <button class="delete-btn" onclick="deleteFolder('\${enc}')">删除</button>
-              </div></td>
-            </tr>
-          \`;
+          return { name: fname, full: full, count: count };
         });
-        showFiles.forEach(function (f) {
-          tbody.innerHTML += \`
-            <tr>
-              <td class="fname-cell"><div class="fname-box"><span class="fname-text">\${f.name}</span></div></td>
-              <td class="col-nowrap col-size">\${(f.size / 1024).toFixed(2)} KB</td>
-              <td class="col-nowrap col-time">\${new Date(f.time).toLocaleString()}</td>
-              <td class="actions"><div class="actions-in">
-                <a href="javascript:void(0)" onclick="previewFile('\${f.full}')">预览</a>
-                <a href="javascript:void(0)" onclick="downloadFile('\${f.full}')">下载</a>
-                <a href="javascript:void(0)" onclick="moveFile('\${f.full}')">移动</a>
-                <button class="delete-btn" onclick="deleteFile('\${f.full}')">删除</button>
-              </div></td>
-            </tr>
+        let outFiles = files;
+        if (searchQuery) {
+          folders = folders.filter(function (d) { return d.name.toLowerCase().indexOf(searchQuery) !== -1; });
+          outFiles = files.filter(function (f) { return f.name.toLowerCase().indexOf(searchQuery) !== -1; });
+        }
+        if (currentFilter === 'folder') outFiles = [];
+        if (currentFilter === 'file') folders = [];
+        return { folders: folders, files: outFiles };
+      }
+
+      function renderAll() {
+        renderCrumbs();
+        const realAll = allFilesCache.filter(function (f) { return f.filename.slice(-6) !== '/.keep'; });
+        const totalSize = realAll.reduce(function (s, f) { return s + (f.size || 0); }, 0);
+        document.getElementById('usageLine').innerHTML = '已用 <b>' + fmtSize(totalSize) + '</b> · ' + realAll.length + ' 个文件';
+        const view = currentView();
+        viewFolders = view.folders;
+        viewFiles = view.files;
+        folderActionTarget = null;
+
+        const recentEl = document.getElementById('recentSection');
+        if (!currentPath && !searchQuery && currentFilter !== 'folder' && realAll.length) {
+          const sorted = realAll.slice().sort(function (a, b) { return String(b.upload_time).localeCompare(String(a.upload_time)); });
+          const top = sorted[0];
+          const info = fileTypeInfo(top.filename);
+          recentEl.innerHTML = \`
+            <div class="sec-title"><span>Recent File</span></div>
+            <div class="recent-card" id="recentCard">
+              <div class="rc-icon">\${info.icon}</div>
+              <div class="rc-name">\${top.filename}</div>
+              <div class="rc-meta">
+                <div class="rc-sub">\${fmtSize(top.size)}<br>上传于 \${new Date(top.upload_time).toLocaleDateString()}</div>
+                <button class="rc-open">Open</button>
+              </div>
+            </div>
           \`;
-        });
-        document.querySelectorAll('.fname-box').forEach(function (box) {
-          const span = box.querySelector('.fname-text');
+          const card = document.getElementById('recentCard');
+          if (card) card.onclick = function () { previewFile(top.filename); };
+        } else { recentEl.innerHTML = ''; }
+
+        const folderEl = document.getElementById('folderSection');
+        if (view.folders.length) {
+          let h = '<div class="sec-title"><span>文件夹</span></div><div class="folder-grid">';
+          view.folders.forEach(function (d, i) {
+            h += \`
+              <div class="folder-card fc-c\${i % 5}" data-fidx="\${i}">
+                <span class="fc-icon">📁</span>
+                <span class="fc-name">\${d.name}</span>
+                <span class="fc-count">\${d.count} 个</span>
+                <button class="fc-more" data-fmore="\${i}">⋮</button>
+              </div>
+            \`;
+          });
+          h += '<div class="folder-actions" id="folderActions"><button data-fact="rename">改名</button><button data-fact="delete">删除</button></div></div>';
+          folderEl.innerHTML = h;
+        } else { folderEl.innerHTML = ''; }
+
+        const fileEl = document.getElementById('fileSection');
+        if (view.files.length) {
+          let h = '<div class="sec-title"><span>' + (currentPath ? '文件' : '全部文件') + ' · ' + view.files.length + ' 个</span></div>';
+          view.files.forEach(function (f, i) {
+            const info = fileTypeInfo(f.name);
+            h += \`
+              <div class="file-row \${info.cls}" data-idx="\${i}">
+                <div class="file-icon">\${info.icon}</div>
+                <div class="file-meta">
+                  <div class="file-name"><span class="fname-text">\${f.name}</span></div>
+                  <div class="file-sub">\${fmtSize(f.size)} · \${new Date(f.time).toLocaleDateString()}</div>
+                </div>
+                <button class="file-more">⋮</button>
+              </div>
+              <div class="file-actions" data-act-for="\${i}">
+                <button class="act-btn act-link" data-act="link" title="复制链接">🔗</button>
+                <button class="act-btn act-dl" data-act="download" title="下载">⬇️</button>
+                <button class="act-btn act-move" data-act="move" title="移动">↔️</button>
+                <button class="act-btn act-del" data-act="delete" title="删除">🗑️</button>
+              </div>
+            \`;
+          });
+          fileEl.innerHTML = h;
+        } else { fileEl.innerHTML = ''; }
+
+        const emptyEl = document.getElementById('emptyState');
+        if (!view.folders.length && !view.files.length) {
+          emptyEl.style.display = '';
+          emptyEl.textContent = searchQuery ? '没有找到相关文件' : (currentPath ? '此文件夹为空' : '暂无文件，点底部 ＋ 上传');
+        } else { emptyEl.style.display = 'none'; }
+
+        document.querySelectorAll('#fileSection .fname-text').forEach(function (span) {
+          const box = span.closest('.file-name');
+          if (!box) return;
           const dx = span.scrollWidth - box.clientWidth;
           if (dx > 4) {
             span.style.setProperty('--dx', dx + 'px');
@@ -627,46 +807,151 @@ function getAdminHTML() {
         });
       }
 
+      document.getElementById('fileSection').addEventListener('click', function (e) {
+        const actBtn = e.target.closest('.act-btn');
+        if (actBtn) {
+          const wrap = actBtn.closest('.file-actions');
+          const idx = parseInt(wrap.getAttribute('data-act-for'), 10);
+          const f = viewFiles[idx];
+          if (!f) return;
+          const act = actBtn.getAttribute('data-act');
+          if (act === 'link') copyLink(f.full);
+          else if (act === 'download') downloadFile(f.full);
+          else if (act === 'move') moveFile(f.full);
+          else if (act === 'delete') deleteFile(f.full);
+          return;
+        }
+        const row = e.target.closest('.file-row');
+        if (!row) return;
+        const idx = parseInt(row.getAttribute('data-idx'), 10);
+        const f = viewFiles[idx];
+        if (!f) return;
+        if (e.target.closest('.file-more')) {
+          const acts = document.querySelector('.file-actions[data-act-for="' + idx + '"]');
+          const wasOpen = acts && acts.classList.contains('open');
+          document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); });
+          if (acts && !wasOpen) acts.classList.add('open');
+          return;
+        }
+        previewFile(f.full);
+      });
+
+      document.getElementById('folderSection').addEventListener('click', function (e) {
+        const factBtn = e.target.closest('[data-fact]');
+        if (factBtn) {
+          const fact = factBtn.getAttribute('data-fact');
+          if (!folderActionTarget) return;
+          const enc = encodeURIComponent(folderActionTarget);
+          if (fact === 'rename') renameFolder(enc);
+          else if (fact === 'delete') deleteFolder(enc);
+          return;
+        }
+        const more = e.target.closest('.fc-more');
+        if (more) {
+          const card = more.closest('.folder-card');
+          const idx = parseInt(card.getAttribute('data-fidx'), 10);
+          const d = viewFolders[idx];
+          if (!d) return;
+          const fa = document.getElementById('folderActions');
+          if (folderActionTarget === d.full && fa && fa.classList.contains('open')) {
+            fa.classList.remove('open');
+            folderActionTarget = null;
+          } else {
+            folderActionTarget = d.full;
+            if (fa) fa.classList.add('open');
+          }
+          return;
+        }
+        const card = e.target.closest('.folder-card');
+        if (!card) return;
+        const idx = parseInt(card.getAttribute('data-fidx'), 10);
+        const d = viewFolders[idx];
+        if (!d) return;
+        enterFolder(encodeURIComponent(d.full));
+      });
+
+      function copyLink(full) {
+        const url = location.origin + '/widgets/' + encodeURIComponent(full);
+        const done = function () { showToast('已复制链接'); };
+        const fallback = function () {
+          const ta = document.createElement('textarea');
+          ta.value = url;
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          ta.remove();
+          done();
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done).catch(function () { fallback(); });
+        } else { fallback(); }
+      }
+
+      function openSheet() {
+        document.getElementById('actionSheet').classList.add('open');
+        document.getElementById('sheetBackdrop').classList.add('open');
+      }
+      function closeSheet() {
+        document.getElementById('actionSheet').classList.remove('open');
+        document.getElementById('sheetBackdrop').classList.remove('open');
+      }
+      function pickFiles() { closeSheet(); document.getElementById('fileInput').click(); }
+      function sheetCreateFolder() { closeSheet(); createFolder(); }
+
+      function openStorage() {
+        const groups = [
+          { label: '图片', cls: 't-img', color: '#8fce8f', size: 0 },
+          { label: '视频', cls: 't-vid', color: '#b39ddb', size: 0 },
+          { label: '音频', cls: 't-aud', color: '#f2a7c3', size: 0 },
+          { label: '文档', cls: 't-doc', color: '#7db8f7', size: 0 },
+          { label: '其他', cls: null, color: '#9ca3af', size: 0 }
+        ];
+        let total = 0;
+        allFilesCache.forEach(function (f) {
+          if (f.filename.slice(-6) === '/.keep') return;
+          const sz = f.size || 0;
+          total += sz;
+          const info = fileTypeInfo(f.filename);
+          const g = groups.find(function (x) { return x.cls === info.cls; }) || groups[4];
+          g.size += sz;
+        });
+        const totalFiles = allFilesCache.filter(function (f) { return f.filename.slice(-6) !== '/.keep'; }).length;
+        document.getElementById('storageTotal').textContent = totalFiles + ' 个文件 · 合计 ' + fmtSize(total);
+        let h = '';
+        groups.forEach(function (g) {
+          const pct = total ? Math.round(g.size / total * 100) : 0;
+          h += '<div class="storage-row"><div class="sr-top"><span>' + g.label + '</span><b>' + fmtSize(g.size) + ' · ' + pct + '%</b></div><div class="storage-bar"><i style="width:' + pct + '%;background:' + g.color + '"></i></div></div>';
+        });
+        document.getElementById('storageBody').innerHTML = h;
+        document.getElementById('storageModal').classList.add('open');
+      }
+      function closeStorage() { document.getElementById('storageModal').classList.remove('open'); }
+
       function onFilesChosen() {
         const n = document.getElementById('fileInput').files.length;
-        document.getElementById('chosenTip').textContent = n ? ('已选 ' + n + ' 个文件') : '';
+        if (n) uploadFile();
       }
 
       async function uploadFile() {
         const fileInput = document.getElementById('fileInput');
         const files = Array.prototype.slice.call(fileInput.files);
-        const btn = document.querySelector('.upload-btn');
-
-        if (!files.length) return alert('请先选择文件');
-
-        btn.disabled = true;
+        if (!files.length) return;
         let okCount = 0;
         const failed = [];
         for (let i = 0; i < files.length; i++) {
-          btn.textContent = '上传中 ' + (i + 1) + '/' + files.length + '...';
+          showToast('上传中 ' + (i + 1) + '/' + files.length + '...');
           try {
             const formData = new FormData();
             formData.append('file', files[i]);
             if (currentPath) formData.append('folder', currentPath);
-            const res = await fetch('/api/upload', {
-              method: 'POST',
-              body: formData
-            });
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
             if (res.ok) okCount++; else failed.push(files[i].name);
-          } catch (e) {
-            failed.push(files[i].name);
-          }
+          } catch (e) { failed.push(files[i].name); }
         }
-
-        btn.textContent = '上传文件';
-        btn.disabled = false;
         fileInput.value = '';
-        onFilesChosen();
         loadFiles();
-
-        if (failed.length) {
-          alert('成功 ' + okCount + ' 个，失败 ' + failed.length + ' 个：\\n' + failed.join('\\n'));
-        }
+        if (failed.length) showToast('成功 ' + okCount + ' 个，失败 ' + failed.length + ' 个');
+        else showToast('上传完成 ' + okCount + ' 个');
       }
 
       async function deleteFile(filename) {
