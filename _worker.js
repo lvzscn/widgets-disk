@@ -572,7 +572,7 @@ function getAdminHTML() {
         <button class="chip" data-filter="folder" onclick="setFilter('folder')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Folder</button>
       </div>
       <div class="crumb-bar" id="crumbBar">
-        <button class="back-btn" id="backBtn" onclick="goUp()" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="back-btn" id="backBtn" onclick="goUp()" style="display:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
         <div class="crumbs" id="crumbs"></div>
       </div>
       <div class="scroll-area" id="scrollArea">
@@ -810,11 +810,11 @@ function getAdminHTML() {
         let outFiles = files;
         if (!currentPath && currentFilter === 'all') {
           outFiles = allFilesCache.filter(function (f) { return f.filename.slice(-6) !== '/.keep'; })
-            .map(function (f) { return { name: f.filename, full: f.filename, size: f.size, time: f.upload_time }; });
+            .map(function (f) { return { name: f.filename.slice(f.filename.lastIndexOf('/') + 1), full: f.filename, size: f.size, time: f.upload_time }; });
         }
         if (searchQuery) {
           folders = folders.filter(function (d) { return d.name.toLowerCase().indexOf(searchQuery) !== -1; });
-          outFiles = outFiles.filter(function (f) { return f.name.toLowerCase().indexOf(searchQuery) !== -1; });
+          outFiles = outFiles.filter(function (f) { return f.full.toLowerCase().indexOf(searchQuery) !== -1; });
         }
         if (currentFilter === 'folder') outFiles = [];
         return { folders: folders, files: outFiles };
