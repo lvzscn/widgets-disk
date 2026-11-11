@@ -385,7 +385,7 @@ function getAdminHTML() {
       html { overscroll-behavior: none; }
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #eef3f9; margin: 0; padding: 0; color: #1f2937; height: 100vh; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
       input, textarea, select { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
-      .app { max-width: 560px; margin: 0 auto; width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 16px 0; box-sizing: border-box; }
+      .app { max-width: 560px; margin: 0 auto; width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 11px 0 16px; box-sizing: border-box; }
 
       /* 搜索条 */
       .search-wrap { flex-shrink: 0; display: flex; align-items: center; background: #e6ebf2; border-radius: 999px; padding: 0 16px; }
@@ -421,7 +421,7 @@ function getAdminHTML() {
       .sec-title .sec-more { font-size: 13px; font-weight: 500; color: #9ca3af; cursor: pointer; }
 
       /* 最近文件大卡 */
-      .recent-card { background: linear-gradient(135deg, #7db9f2, #4a90e2); border-radius: 22px; padding: 22px; color: #ffffff; position: relative; overflow: hidden; cursor: pointer; }
+      .recent-card { background: linear-gradient(135deg, #7db9f2, #4a90e2); border-radius: 22px; padding: 22px; color: #ffffff; position: relative; overflow: hidden; cursor: pointer; margin: 0 5px; }
       .recent-card .rc-icon { opacity: 0.85; color: #ffffff; }
       .recent-card .rc-icon svg { width: 34px; height: 34px; }
       .recent-card .rc-name { font-size: 24px; font-weight: 800; margin-top: 34px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
