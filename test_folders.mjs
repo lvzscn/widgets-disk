@@ -222,6 +222,7 @@ if (m) {
   check('进入文件夹时 Folder 筛选自动切回 All', m[1].includes("if (currentPath && currentFilter === 'folder')") && m[1].includes("currentFilter = 'all'"));
   check('已删「文件」筛选，只剩 All/Folder', !html.includes('data-filter="file"') && !m[1].includes("currentFilter === 'file'"));
   check('文件链接分段编码（斜杠保持原样）', m[1].includes("function encPath(p) { return p.split('/').map(encodeURIComponent).join('/'); }") && m[1].includes("'/widgets/' + encPath(") && m[1].includes("'/download/' + encPath("));
+  check('展开操作条时滚进视野且不被滚动收起', m[1].includes("scrollIntoView({ behavior: 'smooth', block: 'nearest' })") && m[1].includes("if (suppressScrollClose) return;"));
   check('文件操作按钮用 SVG 图标', ['ICONS.link', 'ICONS.download', 'ICONS.move', 'ICONS.trash'].every(s => m[1].includes(s)));
   check('文件夹卡片用 SVG 图标', m[1].includes('ICONS.folder'));
   check('最近文件标题为中文', html.includes('最近文件') && !html.includes('Recent File'));

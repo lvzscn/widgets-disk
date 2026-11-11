@@ -637,6 +637,7 @@ function getAdminHTML() {
       let folderActionTarget = null;
       let editMode = false;
       let selFiles = new Set();
+      let suppressScrollClose = false;
 
       function fmtSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
@@ -1002,13 +1003,19 @@ function getAdminHTML() {
           const acts = document.querySelector('.file-actions[data-act-for="' + idx + '"]');
           const wasOpen = acts && acts.classList.contains('open');
           document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); });
-          if (acts && !wasOpen) acts.classList.add('open');
+          if (acts && !wasOpen) {
+            acts.classList.add('open');
+            suppressScrollClose = true;
+            acts.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            setTimeout(function () { suppressScrollClose = false; }, 600);
+          }
           return;
         }
         previewFile(f.full);
       });
 
       document.getElementById('scrollArea').addEventListener('scroll', function () {
+        if (suppressScrollClose) return;
         document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); });
         const fa = document.getElementById('folderActions');
         if (fa) fa.classList.remove('open');
@@ -1043,7 +1050,12 @@ function getAdminHTML() {
             folderActionTarget = null;
           } else {
             folderActionTarget = d.full;
-            if (fa) fa.classList.add('open');
+            if (fa) {
+              fa.classList.add('open');
+              suppressScrollClose = true;
+              fa.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              setTimeout(function () { suppressScrollClose = false; }, 600);
+            }
           }
           return;
         }
