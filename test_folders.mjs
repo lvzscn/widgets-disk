@@ -216,6 +216,9 @@ if (m) {
   check('底部导航五等分 grid，加号格内居中', html.includes('grid-template-columns: repeat(5, 1fr)') && html.includes('.nav-plus') && html.split('.nav-plus')[1].split('}')[0].includes('justify-self: center'));
   check('滑动屏幕自动收起操作按钮', m[1].includes("addEventListener('scroll'") && m[1].includes('.file-actions.open') && m[1].includes('folderActions'));
   check('加号为模板样式小细线圆圈（32px 描边、无填充、不上浮）', html.includes('width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #111827; background: transparent') && !html.split('.nav-plus')[1].split('}')[0].includes('margin-top: -26px'));
+  check('All 栏根目录扁平化显示真正全部文件', m[1].includes("currentFilter === 'all'") && m[1].includes("outFiles = outFiles.filter"));
+  check('点空白处自动收起操作按钮（文档级点击）', m[1].includes("document.addEventListener('click'") && m[1].includes('.file-actions, .folder-actions, .file-more, .fc-more, .batch-actions'));
+  check('文件夹区有新建文件夹按钮（Folder 栏无文件夹也显示）', html.includes('新建文件夹') && html.includes('onclick="createFolder()"') && m[1].includes("view.folders.length || currentFilter === 'folder'"));
   check('文件操作按钮用 SVG 图标', ['ICONS.link', 'ICONS.download', 'ICONS.move', 'ICONS.trash'].every(s => m[1].includes(s)));
   check('文件夹卡片用 SVG 图标', m[1].includes('ICONS.folder'));
   check('最近文件标题为中文', html.includes('最近文件') && !html.includes('Recent File'));

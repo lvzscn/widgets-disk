@@ -786,9 +786,13 @@ function getAdminHTML() {
           return { name: fname, full: full, count: count };
         });
         let outFiles = files;
+        if (!currentPath && currentFilter === 'all') {
+          outFiles = allFilesCache.filter(function (f) { return f.filename.slice(-6) !== '/.keep'; })
+            .map(function (f) { return { name: f.filename, full: f.filename, size: f.size, time: f.upload_time }; });
+        }
         if (searchQuery) {
           folders = folders.filter(function (d) { return d.name.toLowerCase().indexOf(searchQuery) !== -1; });
-          outFiles = files.filter(function (f) { return f.name.toLowerCase().indexOf(searchQuery) !== -1; });
+          outFiles = outFiles.filter(function (f) { return f.name.toLowerCase().indexOf(searchQuery) !== -1; });
         }
         if (currentFilter === 'folder') outFiles = [];
         if (currentFilter === 'file') folders = [];
@@ -826,19 +830,22 @@ function getAdminHTML() {
         } else { recentEl.innerHTML = ''; }
 
         const folderEl = document.getElementById('folderSection');
-        if (view.folders.length) {
-          let h = '<div class="sec-title"><span>文件夹</span></div><div class="folder-grid">';
-          view.folders.forEach(function (d, i) {
-            h += \`
-              <div class="folder-card fc-c\${i % 5}" data-fidx="\${i}">
-                <span class="fc-icon">\${ICONS.folder}</span>
-                <span class="fc-name">\${d.name}</span>
-                <span class="fc-count">\${d.count} 个</span>
-                <button class="fc-more" data-fmore="\${i}">⋮</button>
-              </div>
-            \`;
-          });
-          h += '<div class="folder-actions" id="folderActions"><button data-fact="rename">改名</button><button data-fact="delete">删除</button></div></div>';
+        if (view.folders.length || currentFilter === 'folder') {
+          let h = '<div class="sec-title"><span>文件夹</span><button class="edit-btn" onclick="createFolder()">＋ 新建文件夹</button></div>';
+          if (view.folders.length) {
+            h += '<div class="folder-grid">';
+            view.folders.forEach(function (d, i) {
+              h += \`
+                <div class="folder-card fc-c\${i % 5}" data-fidx="\${i}">
+                  <span class="fc-icon">\${ICONS.folder}</span>
+                  <span class="fc-name">\${d.name}</span>
+                  <span class="fc-count">\${d.count} 个</span>
+                  <button class="fc-more" data-fmore="\${i}">⋮</button>
+                </div>
+              \`;
+            });
+            h += '<div class="folder-actions" id="folderActions"><button data-fact="rename">改名</button><button data-fact="delete">删除</button></div></div>';
+          }
           folderEl.innerHTML = h;
         } else { folderEl.innerHTML = ''; }
 
@@ -1002,6 +1009,13 @@ function getAdminHTML() {
         const fa = document.getElementById('folderActions');
         if (fa) fa.classList.remove('open');
       }, { passive: true });
+
+      document.addEventListener('click', function (e) {
+        if (e.target.closest('.file-actions, .folder-actions, .file-more, .fc-more, .batch-actions')) return;
+        document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); });
+        const fa = document.getElementById('folderActions');
+        if (fa) fa.classList.remove('open');
+      });
 
       document.getElementById('folderSection').addEventListener('click', function (e) {
         const factBtn = e.target.closest('[data-fact]');
