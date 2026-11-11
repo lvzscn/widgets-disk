@@ -563,7 +563,7 @@ function getAdminHTML() {
       </div>
       <div class="brand-row">
         <div>
-          <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>Widgets Disk</div>
+          <div class="brand">Widgets Disk</div>
           <div class="usage" id="usageLine"></div>
         </div>
       </div>
@@ -667,7 +667,6 @@ function getAdminHTML() {
           return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
         }
         return {
-          cloud: svg('<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>'),
           search: svg('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
           folder: svg('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'),
           folderPlus: svg('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>'),
@@ -735,12 +734,6 @@ function getAdminHTML() {
 
       function goToPath(p) {
         currentPath = p || '';
-        if (currentPath && currentFilter === 'folder') {
-          currentFilter = 'all';
-          document.querySelectorAll('#chips .chip').forEach(function (c) {
-            c.classList.toggle('active', c.getAttribute('data-filter') === 'all');
-          });
-        }
         loadFiles();
       }
 

@@ -219,7 +219,8 @@ if (m) {
   check('All 栏根目录扁平化显示真正全部文件', m[1].includes("currentFilter === 'all'") && m[1].includes("outFiles = outFiles.filter"));
   check('点空白处自动收起操作按钮（文档级点击）', m[1].includes("document.addEventListener('click'") && m[1].includes('.file-actions, .folder-actions, .file-more, .fc-more, .batch-actions'));
   check('文件夹区有新建文件夹按钮（Folder 栏无文件夹也显示）', html.includes('新建文件夹') && html.includes('onclick="createFolder()"') && m[1].includes("view.folders.length || currentFilter === 'folder'"));
-  check('进入文件夹时 Folder 筛选自动切回 All', m[1].includes("if (currentPath && currentFilter === 'folder')") && m[1].includes("currentFilter = 'all'"));
+  check('进入文件夹不强制切筛选（留在文件夹），点芯片才切', !m[1].includes("if (currentPath && currentFilter === 'folder')"));
+  check('品牌行无云图标，只留 Widgets Disk 文字', html.includes('<div class="brand">Widgets Disk</div>') && !html.includes('M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z'));
   check('已删「文件」筛选，只剩 All/Folder', !html.includes('data-filter="file"') && !m[1].includes("currentFilter === 'file'"));
   check('文件链接分段编码（斜杠保持原样）', m[1].includes("function encPath(p) { return p.split('/').map(encodeURIComponent).join('/'); }") && m[1].includes("'/widgets/' + encPath(") && m[1].includes("'/download/' + encPath("));
   check('展开操作条时滚进视野且不被滚动收起', m[1].includes("function revealActions(el)") && m[1].includes("if (suppressScrollClose) return;") && !m[1].includes("scrollIntoView"));
