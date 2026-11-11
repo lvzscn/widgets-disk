@@ -497,7 +497,8 @@ function getAdminHTML() {
       .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; color: #6b7280; cursor: pointer; padding: 4px 10px; justify-self: center; }
       .nav-item svg { width: 22px; height: 22px; }
       .nav-item span { font-size: 11px; font-weight: 600; }
-      .nav-plus { width: 54px; height: 54px; border-radius: 50%; border: none; background: #111827; color: #ffffff; font-size: 28px; line-height: 1; cursor: pointer; margin-top: -26px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); flex-shrink: 0; justify-self: center; }
+      .nav-plus { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #111827; background: transparent; color: #111827; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; justify-self: center; }
+      .nav-plus svg { width: 18px; height: 18px; }
 
       /* 底部动作菜单 */
       .sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 60; display: none; }
@@ -586,7 +587,7 @@ function getAdminHTML() {
     <nav class="bottom-nav">
       <button class="nav-item" onclick="goToPath('')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>首页</span></button>
       <button class="nav-item" onclick="openStorage()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg><span>存储</span></button>
-      <button class="nav-plus" onclick="openSheet()">＋</button>
+      <button class="nav-plus" onclick="openSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
       <button class="nav-item" onclick="focusSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>搜索</span></button>
       <button class="nav-item" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>退出</span></button>
     </nav>
