@@ -570,7 +570,6 @@ function getAdminHTML() {
       <div class="chips" id="chips">
         <button class="chip active" data-filter="all" onclick="setFilter('all')">All</button>
         <button class="chip" data-filter="folder" onclick="setFilter('folder')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Folder</button>
-        <button class="chip" data-filter="file" onclick="setFilter('file')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>文件</button>
       </div>
       <div class="crumb-bar" id="crumbBar">
         <button class="back-btn" id="backBtn" onclick="goUp()" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -801,7 +800,6 @@ function getAdminHTML() {
           outFiles = outFiles.filter(function (f) { return f.name.toLowerCase().indexOf(searchQuery) !== -1; });
         }
         if (currentFilter === 'folder') outFiles = [];
-        if (currentFilter === 'file') folders = [];
         return { folders: folders, files: outFiles };
       }
 

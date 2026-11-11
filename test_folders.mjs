@@ -220,6 +220,7 @@ if (m) {
   check('点空白处自动收起操作按钮（文档级点击）', m[1].includes("document.addEventListener('click'") && m[1].includes('.file-actions, .folder-actions, .file-more, .fc-more, .batch-actions'));
   check('文件夹区有新建文件夹按钮（Folder 栏无文件夹也显示）', html.includes('新建文件夹') && html.includes('onclick="createFolder()"') && m[1].includes("view.folders.length || currentFilter === 'folder'"));
   check('进入文件夹时 Folder 筛选自动切回 All', m[1].includes("if (currentPath && currentFilter === 'folder')") && m[1].includes("currentFilter = 'all'"));
+  check('已删「文件」筛选，只剩 All/Folder', !html.includes('data-filter="file"') && !m[1].includes("currentFilter === 'file'"));
   check('文件操作按钮用 SVG 图标', ['ICONS.link', 'ICONS.download', 'ICONS.move', 'ICONS.trash'].every(s => m[1].includes(s)));
   check('文件夹卡片用 SVG 图标', m[1].includes('ICONS.folder'));
   check('最近文件标题为中文', html.includes('最近文件') && !html.includes('Recent File'));
