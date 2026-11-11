@@ -929,7 +929,7 @@ function getAdminHTML() {
         files.forEach(function (full, i) {
           setTimeout(function () {
             const a = document.createElement('a');
-            a.href = '/download/' + encodeURIComponent(full);
+            a.href = '/download/' + encPath(full);
             a.download = full.split('/').pop();
             document.body.appendChild(a);
             a.click();
@@ -1055,8 +1055,10 @@ function getAdminHTML() {
         enterFolder(encodeURIComponent(d.full));
       });
 
+      function encPath(p) { return p.split('/').map(encodeURIComponent).join('/'); }
+
       function copyLink(full) {
-        const url = location.origin + '/widgets/' + encodeURIComponent(full);
+        const url = location.origin + '/widgets/' + encPath(full);
         const done = function () { showToast('已复制链接'); };
         const fallback = function () {
           const ta = document.createElement('textarea');
@@ -1294,7 +1296,7 @@ function getAdminHTML() {
         document.body.style.overflow = 'hidden';
         body.classList.remove('img-mode');
         const ext = filename.split('.').pop().toLowerCase();
-        const fileUrl = '/widgets/' + encodeURIComponent(filename);
+        const fileUrl = '/widgets/' + encPath(filename);
         previewCurrentUrl = location.origin + fileUrl;
         document.getElementById('previewUrl').textContent = previewCurrentUrl;
         if (PREVIEW_IMG_EXTS.indexOf(ext) !== -1) {
@@ -1328,7 +1330,7 @@ function getAdminHTML() {
       }
       async function downloadFile(filename) {
         try {
-          const res = await fetch('/download/' + encodeURIComponent(filename));
+          const res = await fetch('/download/' + encPath(filename));
           if (!res.ok) { alert('下载失败'); return; }
           const blob = await res.blob();
           const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
