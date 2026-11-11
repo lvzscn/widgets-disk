@@ -186,7 +186,9 @@ if (m) {
   check('含面包屑栏', html.includes('id="crumbs"'));
   check('含新建文件夹入口（底部菜单）', html.includes('新建文件夹') && html.includes('sheetCreateFolder'));
   check('含上传入口（底部菜单）', html.includes('上传文件') && html.includes('pickFiles'));
-  check('含 createFolder/renameFolder/deleteFolder/moveFile', ['createFolder', 'renameFolder', 'deleteFolder', 'moveFile'].every(fn => m[1].includes(fn)));
+  check('含 createFolder/renameFolder/deleteFolder/openMove/confirmMove', ['createFolder', 'renameFolder', 'deleteFolder', 'openMove', 'confirmMove'].every(fn => m[1].includes(fn)));
+  check('含移动下拉（moveModal/moveSelect/getAllFolders）', m[1].includes('moveModal') && m[1].includes('moveSelect') && m[1].includes('getAllFolders'));
+  check('旧移动 prompt 已删', !m[1].includes("prompt('移动到哪个文件夹"));
   check('含 renderCrumbs/goToPath/enterFolder', ['renderCrumbs', 'goToPath', 'enterFolder'].every(fn => m[1].includes(fn)));
   check('含 .keep 过滤', m[1].includes("'.keep'"));
   check('含 crumb-bar 样式', html.includes('.crumb-bar'));

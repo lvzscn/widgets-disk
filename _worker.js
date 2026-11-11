@@ -509,6 +509,18 @@ function getAdminHTML() {
       .storage-bar { height: 8px; border-radius: 999px; background: #eef2f7; overflow: hidden; }
       .storage-bar i { display: block; height: 100%; border-radius: 999px; }
 
+      /* 移动弹窗 */
+      .move-modal { position: fixed; inset: 0; z-index: 62; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; }
+      .move-modal.open { display: flex; }
+      .move-card { background: #ffffff; border-radius: 20px; padding: 22px; width: 100%; max-width: 420px; box-sizing: border-box; }
+      .move-title { font-size: 18px; font-weight: 800; color: #111827; }
+      .move-file { font-size: 13px; color: #6b7280; margin: 8px 0 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .move-select { width: 100%; box-sizing: border-box; border: 1px solid #d1d5db; border-radius: 12px; padding: 12px; font-size: 15px; color: #111827; background: #f9fafb; margin-bottom: 16px; }
+      .move-btns { display: flex; gap: 10px; }
+      .move-btns button { flex: 1; border-radius: 12px; padding: 12px; font-size: 15px; font-weight: 700; cursor: pointer; }
+      .move-cancel { border: 1px solid #e5e7eb; background: #ffffff; color: #374151; }
+      .move-ok { border: none; background: #3b82f6; color: #ffffff; }
+
       .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 70; background: rgba(17,24,39,0.92); color: #ffffff; font-size: 14px; padding: 10px 18px; border-radius: 999px; white-space: nowrap; display: none; pointer-events: none; }
 
       /* 预览（原样保留） */
@@ -581,6 +593,18 @@ function getAdminHTML() {
         <div class="storage-total" id="storageTotal"></div>
         <div id="storageBody"></div>
         <button class="sheet-cancel" onclick="closeStorage()">关闭</button>
+      </div>
+    </div>
+
+    <div class="move-modal" id="moveModal" onclick="if(event.target===this)closeMove()">
+      <div class="move-card">
+        <div class="move-title">移动到哪个文件夹？</div>
+        <div class="move-file" id="moveFileName"></div>
+        <select id="moveSelect" class="move-select"></select>
+        <div class="move-btns">
+          <button class="move-cancel" onclick="closeMove()">取消</button>
+          <button class="move-ok" onclick="confirmMove()">确定</button>
+        </div>
       </div>
     </div>
 
@@ -856,7 +880,7 @@ function getAdminHTML() {
           const act = actBtn.getAttribute('data-act');
           if (act === 'link') copyLink(f.full);
           else if (act === 'download') downloadFile(f.full);
-          else if (act === 'move') moveFile(f.full);
+          else if (act === 'move') openMove(f.full);
           else if (act === 'delete') deleteFile(f.full);
           return;
         }
@@ -1058,14 +1082,51 @@ function getAdminHTML() {
         }
       }
 
-      async function moveFile(full) {
+      let moveTarget = null;
+
+      function getAllFolders() {
+        const set = {};
+        allFilesCache.forEach(function (f) {
+          const parts = f.filename.split('/');
+          for (let i = 1; i < parts.length; i++) {
+            set[parts.slice(0, i).join('/')] = true;
+          }
+        });
+        return Object.keys(set).sort();
+      }
+
+      function openMove(full) {
+        moveTarget = full;
         const base = full.split('/').pop();
-        const target = prompt('移动到哪个文件夹？输入文件夹路径，留空为根目录，例如：照片');
-        if (target === null) return;
-        const clean = target.trim();
-        const segs = clean.split('/').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
-        if (segs.some(function (s) { return s === '..' || s === '.' || s === '.keep'; })) { alert('路径无效'); return; }
-        const to = segs.length ? segs.join('/') + '/' + base : base;
+        document.getElementById('moveFileName').textContent = base;
+        const sel = document.getElementById('moveSelect');
+        sel.innerHTML = '';
+        const rootOpt = document.createElement('option');
+        rootOpt.value = '';
+        rootOpt.textContent = '根目录';
+        sel.appendChild(rootOpt);
+        getAllFolders().forEach(function (p) {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          sel.appendChild(opt);
+        });
+        sel.value = full.indexOf('/') !== -1 ? full.slice(0, full.lastIndexOf('/')) : '';
+        document.getElementById('moveModal').classList.add('open');
+      }
+
+      function closeMove() {
+        document.getElementById('moveModal').classList.remove('open');
+        moveTarget = null;
+      }
+
+      async function confirmMove() {
+        if (!moveTarget) return;
+        const full = moveTarget;
+        const base = full.split('/').pop();
+        const target = document.getElementById('moveSelect').value;
+        const to = target ? target + '/' + base : base;
+        closeMove();
         if (to === full) return;
         const res = await fetch('/api/move', {
           method: 'POST',
