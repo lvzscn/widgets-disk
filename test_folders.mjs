@@ -224,7 +224,7 @@ if (m) {
   check('文件链接分段编码（斜杠保持原样）', m[1].includes("function encPath(p) { return p.split('/').map(encodeURIComponent).join('/'); }") && m[1].includes("'/widgets/' + encPath(") && m[1].includes("'/download/' + encPath("));
   check('展开操作条时滚进视野且不被滚动收起', m[1].includes("function revealActions(el)") && m[1].includes("if (suppressScrollClose) return;") && !m[1].includes("scrollIntoView"));
   check('返回按钮 24px（缩小20%），箭头 20px', html.includes('.back-btn { width: 24px; height: 24px;') && html.includes('.back-btn svg { width: 20px; height: 20px; }'));
-  check('操作条滚入视野用立刻滚动+120px 导航留白', m[1].includes("navClear = 120") && m[1].includes("behavior: 'auto'"));
+  check('操作条滚入视野用立刻滚动+120px 导航留白+16px 边距', m[1].includes("navClear = 120") && m[1].includes("behavior: 'auto'") && m[1].includes("visibleBottom + 16"));
   check('文件操作按钮用 SVG 图标', ['ICONS.link', 'ICONS.download', 'ICONS.move', 'ICONS.trash'].every(s => m[1].includes(s)));
   check('文件夹卡片用 SVG 图标', m[1].includes('ICONS.folder'));
   check('最近文件标题为中文', html.includes('最近文件') && !html.includes('Recent File'));

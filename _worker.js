@@ -646,8 +646,8 @@ function getAdminHTML() {
         const navClear = 120;
         const visibleBottom = sar.bottom - navClear;
         let delta = 0;
-        if (r.bottom > visibleBottom) delta = r.bottom - visibleBottom + 8;
-        else if (r.top < sar.top) delta = -(sar.top - r.top + 8);
+        if (r.bottom > visibleBottom) delta = r.bottom - visibleBottom + 16;
+        else if (r.top < sar.top) delta = -(sar.top - r.top + 16);
         if (delta !== 0) {
           suppressScrollClose = true;
           sa.scrollTo({ top: sa.scrollTop + delta, behavior: 'auto' });
