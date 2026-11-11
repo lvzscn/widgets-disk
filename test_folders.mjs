@@ -252,5 +252,14 @@ res = await worker.fetch(new Request(BASE + '/api/files', { headers: AUTH }), en
 const list = await j(res);
 check('列表返回 b.png', Array.isArray(list) && list.some(r => r.filename === 'b.png'));
 
+// T13: 登录页（未登录取 /）底色/图标/按钮与首页蓝块一致
+console.log('T13 登录页');
+res = await worker.fetch(new Request(BASE + '/', {}), env);
+const loginHtml = await res.text();
+check('登录页 200', res.status === 200, 'got ' + res.status);
+check('登录页底色同首页 #eef3f9，无旧 #f3f4f6', loginHtml.includes('background-color: #eef3f9') && !loginHtml.includes('#f3f4f6'));
+check('验证身份左边用网页图标 icon-192，无 🗂️ 表情', loginHtml.includes('<img src="/icon-192.png?v=892bc065f8" alt="" class="login-icon">验证身份') && !loginHtml.includes('🗂'));
+check('进入控制台按钮用蓝块同款渐变', loginHtml.includes('background: linear-gradient(135deg, #7db9f2, #4a90e2)') && !loginHtml.includes('background-color: #3b82f6') && !loginHtml.includes('background-color: #2563eb'));
+
 console.log(`\n结果: ${pass} 过, ${fail} 挂`);
 process.exit(fail ? 1 : 0);
