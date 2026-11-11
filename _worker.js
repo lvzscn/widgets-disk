@@ -719,6 +719,12 @@ function getAdminHTML() {
 
       function goToPath(p) {
         currentPath = p || '';
+        if (currentPath && currentFilter === 'folder') {
+          currentFilter = 'all';
+          document.querySelectorAll('#chips .chip').forEach(function (c) {
+            c.classList.toggle('active', c.getAttribute('data-filter') === 'all');
+          });
+        }
         loadFiles();
       }
 
