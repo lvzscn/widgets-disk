@@ -456,14 +456,25 @@ function getAdminHTML() {
       .fname-text.scrolling { animation: fnameScroll 7s ease-in-out infinite alternate; }
       .file-sub { font-size: 12px; color: #6b7280; margin-top: 3px; }
       .file-more { background: none; border: none; color: #9ca3af; font-size: 20px; cursor: pointer; padding: 6px 2px; flex-shrink: 0; }
-      .file-actions { display: none; margin: -2px 0 10px; padding: 12px 14px; background: #ffffff; border-radius: 18px; gap: 12px; justify-content: flex-end; }
+      .file-actions { display: none; margin: -2px 0 10px; padding: 12px 14px; background: #ffffff; border-radius: 18px; gap: 12px; justify-content: center; }
       .file-actions.open { display: flex; }
       .act-btn { width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
       .act-btn svg { width: 20px; height: 20px; }
-      .act-link { background: #f6c453; color: #111827; }
-      .act-dl { background: #1e3a5f; color: #ffffff; }
-      .act-move { background: #ffffff; border: 1px solid #e5e7eb; color: #374151; }
-      .act-del { background: #ef4444; color: #ffffff; }
+      .act-link { background: #dbeafe; color: #2563eb; }
+      .act-dl { background: #dcfce7; color: #16a34a; }
+      .act-move { background: #f3f4f6; color: #4b5563; }
+      .act-del { background: #fee2e2; color: #dc2626; }
+
+      /* 编辑多选 */
+      .edit-btn { background: #ffffff; border: 1px solid #e5e7eb; color: #374151; border-radius: 999px; padding: 7px 16px; font-size: 14px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+      .edit-btn.on { background: #3b82f6; border-color: transparent; color: #ffffff; }
+      .sel-box { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #d1d5db; background: #ffffff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #ffffff; }
+      .sel-box.on { background: #3b82f6; border-color: #3b82f6; }
+      .sel-box svg { width: 14px; height: 14px; }
+      .batch-actions { display: flex; align-items: center; justify-content: space-between; background: #ffffff; border-radius: 18px; padding: 12px 14px; margin-bottom: 10px; }
+      .batch-count { font-size: 14px; font-weight: 600; color: #374151; }
+      .batch-btns { display: flex; gap: 12px; }
+      .batch-btns .act-btn:disabled { opacity: 0.35; }
       @keyframes fnameScroll {
         0%, 25% { transform: translateX(0); }
         90%, 100% { transform: translateX(calc(-1 * var(--dx, 0px))); }
@@ -486,7 +497,7 @@ function getAdminHTML() {
       .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; color: #6b7280; cursor: pointer; padding: 4px 10px; }
       .nav-item svg { width: 22px; height: 22px; }
       .nav-item span { font-size: 11px; font-weight: 600; }
-      .nav-plus { width: 54px; height: 54px; border-radius: 50%; border: none; background: #111827; color: #ffffff; font-size: 28px; line-height: 1; cursor: pointer; margin-top: -26px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); flex-shrink: 0; }
+      .nav-plus { width: 54px; height: 54px; border-radius: 50%; border: none; background: #111827; color: #ffffff; font-size: 28px; line-height: 1; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,0.25); position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); }
 
       /* 底部动作菜单 */
       .sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 60; display: none; }
@@ -547,7 +558,7 @@ function getAdminHTML() {
     <div class="app">
       <div class="search-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="searchInput" type="search" placeholder="Search" oninput="onSearch()">
+        <input id="searchInput" type="text" placeholder="Search" oninput="onSearch()">
       </div>
       <div class="brand-row">
         <div>
@@ -624,6 +635,8 @@ function getAdminHTML() {
       let viewFiles = [];
       let viewFolders = [];
       let folderActionTarget = null;
+      let editMode = false;
+      let selFiles = new Set();
 
       function fmtSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
@@ -655,7 +668,8 @@ function getAdminHTML() {
           home: svg('<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'),
           chart: svg('<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>'),
           logout: svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'),
-          chevronLeft: svg('<polyline points="15 18 9 12 15 6"/>')
+          chevronLeft: svg('<polyline points="15 18 9 12 15 6"/>'),
+          check: svg('<polyline points="20 6 9 17 4 12"/>')
         };
       })();
 
@@ -827,26 +841,39 @@ function getAdminHTML() {
           folderEl.innerHTML = h;
         } else { folderEl.innerHTML = ''; }
 
+        if (editMode && !view.files.length) { editMode = false; selFiles.clear(); }
         const fileEl = document.getElementById('fileSection');
         if (view.files.length) {
-          let h = '<div class="sec-title"><span>' + (currentPath ? '文件' : '全部文件') + ' · ' + view.files.length + ' 个</span></div>';
+          let h = '<div class="sec-title"><span>' + (currentPath ? '文件' : '全部文件') + ' · ' + view.files.length + ' 个</span><button class="edit-btn' + (editMode ? ' on' : '') + '" onclick="toggleEdit()">' + (editMode ? '完成' : '编辑') + '</button></div>';
+          if (editMode) {
+            h += '<div class="batch-actions"><span class="batch-count">已选 ' + selFiles.size + ' 个</span><div class="batch-btns">' +
+              '<button class="act-btn act-dl" data-bact="download" title="下载"' + (selFiles.size ? '' : ' disabled') + '>' + ICONS.download + '</button>' +
+              '<button class="act-btn act-move" data-bact="move" title="移动"' + (selFiles.size ? '' : ' disabled') + '>' + ICONS.move + '</button>' +
+              '<button class="act-btn act-del" data-bact="delete" title="删除"' + (selFiles.size ? '' : ' disabled') + '>' + ICONS.trash + '</button>' +
+              '</div></div>';
+          }
           view.files.forEach(function (f, i) {
             const info = fileTypeInfo(f.name);
+            const isSel = selFiles.has(f.full);
+            const selHtml = editMode ? '<span class="sel-box' + (isSel ? ' on' : '') + '">' + ICONS.check + '</span>' : '';
+            const moreHtml = editMode ? '' : '<button class="file-more">⋮</button>';
+            const actsHtml = editMode ? '' : '<div class="file-actions" data-act-for="' + i + '">' +
+              '<button class="act-btn act-link" data-act="link" title="复制链接">' + ICONS.link + '</button>' +
+              '<button class="act-btn act-dl" data-act="download" title="下载">' + ICONS.download + '</button>' +
+              '<button class="act-btn act-move" data-act="move" title="移动">' + ICONS.move + '</button>' +
+              '<button class="act-btn act-del" data-act="delete" title="删除">' + ICONS.trash + '</button>' +
+              '</div>';
             h += \`
               <div class="file-row \${info.cls}" data-idx="\${i}">
+                \${selHtml}
                 <div class="file-icon">\${info.icon}</div>
                 <div class="file-meta">
                   <div class="file-name"><span class="fname-text">\${f.name}</span></div>
                   <div class="file-sub">\${fmtSize(f.size)} · \${new Date(f.time).toLocaleDateString()}</div>
                 </div>
-                <button class="file-more">⋮</button>
+                \${moreHtml}
               </div>
-              <div class="file-actions" data-act-for="\${i}">
-                <button class="act-btn act-link" data-act="link" title="复制链接">\${ICONS.link}</button>
-                <button class="act-btn act-dl" data-act="download" title="下载">\${ICONS.download}</button>
-                <button class="act-btn act-move" data-act="move" title="移动">\${ICONS.move}</button>
-                <button class="act-btn act-del" data-act="delete" title="删除">\${ICONS.trash}</button>
-              </div>
+              \${actsHtml}
             \`;
           });
           fileEl.innerHTML = h;
@@ -870,10 +897,72 @@ function getAdminHTML() {
         });
       }
 
+      function toggleEdit() {
+        editMode = !editMode;
+        if (!editMode) selFiles.clear();
+        renderAll();
+      }
+
+      function updateBatchBar() {
+        const countEl = document.querySelector('.batch-count');
+        if (countEl) countEl.textContent = '已选 ' + selFiles.size + ' 个';
+        document.querySelectorAll('.batch-btns .act-btn').forEach(function (b) {
+          b.disabled = selFiles.size === 0;
+        });
+      }
+
+      function batchDownload() {
+        if (!selFiles.size) return;
+        const files = Array.from(selFiles);
+        files.forEach(function (full, i) {
+          setTimeout(function () {
+            const a = document.createElement('a');
+            a.href = '/download/' + encodeURIComponent(full);
+            a.download = full.split('/').pop();
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }, i * 400);
+        });
+        showToast('开始下载 ' + files.length + ' 个文件');
+      }
+
+      async function batchDelete() {
+        if (!selFiles.size) return;
+        const files = Array.from(selFiles);
+        if (!confirm('确定删除选中的 ' + files.length + ' 个文件吗？此操作不可恢复。')) return;
+        let ok = 0;
+        for (let i = 0; i < files.length; i++) {
+          try {
+            const res = await fetch('/api/delete/' + encodeURIComponent(files[i]), { method: 'DELETE' });
+            if (res.ok) ok++;
+          } catch (e) {}
+        }
+        selFiles.clear();
+        editMode = false;
+        loadFiles();
+        showToast('已删除 ' + ok + ' 个文件');
+      }
+
+      function batchMove() {
+        if (!selFiles.size) return;
+        openMove(Array.from(selFiles));
+      }
+
       document.getElementById('fileSection').addEventListener('click', function (e) {
+        const bactBtn = e.target.closest('[data-bact]');
+        if (bactBtn) {
+          if (bactBtn.disabled) return;
+          const bact = bactBtn.getAttribute('data-bact');
+          if (bact === 'download') batchDownload();
+          else if (bact === 'move') batchMove();
+          else if (bact === 'delete') batchDelete();
+          return;
+        }
         const actBtn = e.target.closest('.act-btn');
         if (actBtn) {
           const wrap = actBtn.closest('.file-actions');
+          if (!wrap) return;
           const idx = parseInt(wrap.getAttribute('data-act-for'), 10);
           const f = viewFiles[idx];
           if (!f) return;
@@ -889,6 +978,14 @@ function getAdminHTML() {
         const idx = parseInt(row.getAttribute('data-idx'), 10);
         const f = viewFiles[idx];
         if (!f) return;
+        if (editMode) {
+          const had = selFiles.has(f.full);
+          if (had) selFiles.delete(f.full); else selFiles.add(f.full);
+          const box = row.querySelector('.sel-box');
+          if (box) box.classList.toggle('on', !had);
+          updateBatchBar();
+          return;
+        }
         if (e.target.closest('.file-more')) {
           const acts = document.querySelector('.file-actions[data-act-for="' + idx + '"]');
           const wasOpen = acts && acts.classList.contains('open');
@@ -1082,7 +1179,7 @@ function getAdminHTML() {
         }
       }
 
-      let moveTarget = null;
+      let moveTargets = [];
 
       function getAllFolders() {
         const set = {};
@@ -1096,9 +1193,9 @@ function getAdminHTML() {
       }
 
       function openMove(full) {
-        moveTarget = full;
-        const base = full.split('/').pop();
-        document.getElementById('moveFileName').textContent = base;
+        moveTargets = Array.isArray(full) ? full.slice() : [full];
+        const label = moveTargets.length === 1 ? moveTargets[0].split('/').pop() : moveTargets.length + ' 个文件';
+        document.getElementById('moveFileName').textContent = label;
         const sel = document.getElementById('moveSelect');
         sel.innerHTML = '';
         const rootOpt = document.createElement('option');
@@ -1111,33 +1208,42 @@ function getAdminHTML() {
           opt.textContent = p;
           sel.appendChild(opt);
         });
-        sel.value = full.indexOf('/') !== -1 ? full.slice(0, full.lastIndexOf('/')) : '';
+        const first = moveTargets[0] || '';
+        sel.value = first.indexOf('/') !== -1 ? first.slice(0, first.lastIndexOf('/')) : '';
         document.getElementById('moveModal').classList.add('open');
       }
 
       function closeMove() {
         document.getElementById('moveModal').classList.remove('open');
-        moveTarget = null;
+        moveTargets = [];
       }
 
       async function confirmMove() {
-        if (!moveTarget) return;
-        const full = moveTarget;
-        const base = full.split('/').pop();
+        if (!moveTargets.length) return;
         const target = document.getElementById('moveSelect').value;
-        const to = target ? target + '/' + base : base;
+        const targets = moveTargets.slice();
         closeMove();
-        if (to === full) return;
-        const res = await fetch('/api/move', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ from: full, to: to })
-        });
-        if (res.ok) { loadFiles(); }
-        else {
-          const d = await res.json().catch(function () { return {}; });
-          alert(d.error || '移动失败');
+        let ok = 0;
+        const failed = [];
+        for (let i = 0; i < targets.length; i++) {
+          const full = targets[i];
+          const base = full.split('/').pop();
+          const to = target ? target + '/' + base : base;
+          if (to === full) { ok++; continue; }
+          try {
+            const res = await fetch('/api/move', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ from: full, to: to })
+            });
+            if (res.ok) ok++; else failed.push(base);
+          } catch (e) { failed.push(base); }
         }
+        selFiles.clear();
+        editMode = false;
+        loadFiles();
+        if (failed.length) showToast('成功 ' + ok + ' 个，失败 ' + failed.length + ' 个');
+        else if (targets.length > 1) showToast('已移动 ' + ok + ' 个文件');
       }
 
       const PREVIEW_TEXT_EXTS = ['js', 'json', 'txt', 'fwd', 'rex', 'css', 'html', 'xml', 'md', 'csv', 'log'];

@@ -204,7 +204,15 @@ if (m) {
   check('含文件操作展开栏', html.includes('.file-actions'));
   check('含 setFilter/onSearch/openSheet/openStorage/copyLink', ['setFilter', 'onSearch', 'openSheet', 'openStorage', 'copyLink'].every(fn => m[1].includes(fn)));
   check('含 fileTypeInfo/fmtSize', m[1].includes('fileTypeInfo') && m[1].includes('fmtSize'));
-  check('含 ICONS 图标集', m[1].includes('const ICONS') && ['ICONS.image', 'ICONS.video', 'ICONS.music', 'ICONS.file', 'ICONS.code', 'ICONS.package'].every(s => m[1].includes(s)));
+  check('含 ICONS 图标集', m[1].includes('const ICONS') && ['ICONS.image', 'ICONS.video', 'ICONS.music', 'ICONS.file', 'ICONS.code', 'ICONS.package', 'ICONS.check'].every(s => m[1].includes(s)));
+  check('搜索框为 type=text（无 iOS 原生放大镜）', html.includes('type="text"') && !html.includes('type="search"'));
+  check('操作按钮为柔和配色', ['.act-link { background: #dbeafe;', '.act-dl { background: #dcfce7;', '.act-move { background: #f3f4f6;', '.act-del { background: #fee2e2;'].every(s => html.includes(s)));
+  check('单文件操作白条按钮居中', html.includes('.file-actions') && html.includes('justify-content: center'));
+  check('底部加号绝对定位居中', html.includes('position: absolute; left: 50%; transform: translateX(-50%)'));
+  check('含编辑按钮与批量栏', m[1].includes('toggleEdit') && m[1].includes('edit-btn') && m[1].includes('batch-actions') && m[1].includes('batch-count'));
+  check('批量栏只有下载/移动/删除三钮（无复制链接）', ['data-bact="download"', 'data-bact="move"', 'data-bact="delete"'].every(s => m[1].includes(s)) && !m[1].includes('data-bact="link"'));
+  check('含批量下载/删除/移动与复选框', ['batchDownload', 'batchDelete', 'batchMove', 'sel-box', 'selFiles', 'editMode'].every(s => m[1].includes(s)));
+  check('移动弹窗支持多文件（moveTargets 数组）', m[1].includes('moveTargets') && m[1].includes('Array.isArray(full)'));
   check('文件操作按钮用 SVG 图标', ['ICONS.link', 'ICONS.download', 'ICONS.move', 'ICONS.trash'].every(s => m[1].includes(s)));
   check('文件夹卡片用 SVG 图标', m[1].includes('ICONS.folder'));
   check('最近文件标题为中文', html.includes('最近文件') && !html.includes('Recent File'));
