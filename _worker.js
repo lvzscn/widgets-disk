@@ -734,6 +734,12 @@ function getAdminHTML() {
 
       function goToPath(p) {
         currentPath = p || '';
+        if (currentPath) {
+          currentFilter = 'folder';
+          document.querySelectorAll('#chips .chip').forEach(function (c) {
+            c.classList.toggle('active', c.getAttribute('data-filter') === 'folder');
+          });
+        }
         loadFiles();
       }
 
@@ -809,7 +815,7 @@ function getAdminHTML() {
           folders = folders.filter(function (d) { return d.name.toLowerCase().indexOf(searchQuery) !== -1; });
           outFiles = outFiles.filter(function (f) { return f.full.toLowerCase().indexOf(searchQuery) !== -1; });
         }
-        if (currentFilter === 'folder') outFiles = [];
+        if (currentFilter === 'folder' && !currentPath) outFiles = [];
         return { folders: folders, files: outFiles };
       }
 
