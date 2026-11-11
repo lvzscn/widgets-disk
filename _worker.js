@@ -493,11 +493,11 @@ function getAdminHTML() {
       .empty-state { text-align: center; padding: 40px 16px; color: #6b7280; font-size: 14px; }
 
       /* 底部导航 */
-      .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: rgba(255,255,255,0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; align-items: center; padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); box-sizing: border-box; }
-      .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; color: #6b7280; cursor: pointer; padding: 4px 10px; }
+      .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: rgba(255,255,255,0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid #e5e7eb; display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); box-sizing: border-box; }
+      .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; color: #6b7280; cursor: pointer; padding: 4px 10px; justify-self: center; }
       .nav-item svg { width: 22px; height: 22px; }
       .nav-item span { font-size: 11px; font-weight: 600; }
-      .nav-plus { width: 54px; height: 54px; border-radius: 50%; border: none; background: #111827; color: #ffffff; font-size: 28px; line-height: 1; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,0.25); position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); }
+      .nav-plus { width: 54px; height: 54px; border-radius: 50%; border: none; background: #111827; color: #ffffff; font-size: 28px; line-height: 1; cursor: pointer; margin-top: -26px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); flex-shrink: 0; justify-self: center; }
 
       /* 底部动作菜单 */
       .sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 60; display: none; }
@@ -995,6 +995,12 @@ function getAdminHTML() {
         }
         previewFile(f.full);
       });
+
+      document.getElementById('scrollArea').addEventListener('scroll', function () {
+        document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); });
+        const fa = document.getElementById('folderActions');
+        if (fa) fa.classList.remove('open');
+      }, { passive: true });
 
       document.getElementById('folderSection').addEventListener('click', function (e) {
         const factBtn = e.target.closest('[data-fact]');
