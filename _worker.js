@@ -407,8 +407,7 @@ function getAdminHTML() {
 
       /* 面包屑 */
       .crumb-bar { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; flex-shrink: 0; min-height: 30px; }
-      .back-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #e5e7eb; background: #ffffff; color: #374151; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-      .back-btn svg { width: 20px; height: 20px; }
+      .back-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #e5e7eb; background: #ffffff; color: #374151; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1; }
       .crumbs { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #6b7280; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
       .crumbs::-webkit-scrollbar { display: none; }
       .crumbs a { color: #3b82f6; text-decoration: none; font-weight: 600; cursor: pointer; flex-shrink: 0; }
@@ -572,7 +571,7 @@ function getAdminHTML() {
         <button class="chip" data-filter="folder" onclick="setFilter('folder')"><svg viewBox="0 0 24 24" fill="#7bc7f9"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>文件夹</button>
       </div>
       <div class="crumb-bar" id="crumbBar">
-        <button class="back-btn" id="backBtn" onclick="goUp()" style="display:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="back-btn" id="backBtn" onclick="goUp()" style="display:none">&#8249;</button>
         <div class="crumbs" id="crumbs"></div>
       </div>
       <div class="scroll-area" id="scrollArea">

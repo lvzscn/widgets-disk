@@ -226,10 +226,10 @@ if (m) {
   check('已删「文件」筛选，只剩 All/Folder', !html.includes('data-filter="file"') && !m[1].includes("currentFilter === 'file'"));
   check('文件链接分段编码（斜杠保持原样）', m[1].includes("function encPath(p) { return p.split('/').map(encodeURIComponent).join('/'); }") && m[1].includes("'/widgets/' + encPath(") && m[1].includes("'/download/' + encPath("));
   check('展开操作条时滚进视野且不被滚动收起', m[1].includes("function revealActions(el)") && m[1].includes("if (suppressScrollClose) return;") && !m[1].includes("scrollIntoView"));
-  check('返回按钮 24px（缩小20%），箭头 20px', html.includes('.back-btn { width: 24px; height: 24px;') && html.includes('.back-btn svg { width: 20px; height: 20px; }'));
+  check('back button 24px, arrow text 20px', html.includes('.back-btn { width: 24px; height: 24px;') && html.includes('font-size: 20px; line-height: 1;'));
   check('操作条滚入视野用立刻滚动+120px 导航留白+16px 边距', m[1].includes("navClear = 120") && m[1].includes("behavior: 'auto'") && m[1].includes("visibleBottom + 16"));
   check('全部文件只显示短名（去掉文件夹前缀与根目录多余 /）', m[1].includes("lastIndexOf('/') + 1") && m[1].includes("f.full.toLowerCase()"));
-  check('返回箭头 SVG 有显式宽高且描边颜色写死', html.includes('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151"'));
+  check('back arrow is text char, no inline SVG', html.includes('id="backBtn"') && html.includes('&#8249;') && !html.split('id="backBtn"')[1].slice(0, 150).includes('<svg'));
   check('筛选芯片中文：全部 / 文件夹，文件夹图标实心蓝 #7bc7f9', html.includes(">全部</button>") && html.includes(">文件夹</button>") && html.includes('fill="#7bc7f9"'));
   check('文件操作按钮用 SVG 图标', ['ICONS.link', 'ICONS.download', 'ICONS.move', 'ICONS.trash'].every(s => m[1].includes(s)));
   check('文件夹卡片用 SVG 图标', m[1].includes('ICONS.folder'));
