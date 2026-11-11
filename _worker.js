@@ -463,6 +463,14 @@ function getAdminHTML() {
       .file-sub { font-size: 12px; color: #6b7280; margin-top: 3px; }
       .file-more { background: none; border: none; color: #9ca3af; font-size: 20px; cursor: pointer; padding: 6px 2px; flex-shrink: 0; }
       .file-more.active { background: #dbeafe; color: #1d4ed8; border-radius: 8px; }
+      .file-row.t-img .file-more.active { background: #b3d1a8; color: #2d5a27; }
+      .file-row.t-vid .file-more.active { background: #c6b6ef; color: #5b21b6; }
+      .file-row.t-aud .file-more.active { background: #f2b3cc; color: #9d174d; }
+      .file-row.t-doc .file-more.active { background: #a8c8f0; color: #1d4ed8; }
+      .file-row.t-pdf .file-more.active { background: #fca5a5; color: #991b1b; }
+      .file-row.t-code .file-more.active { background: #c3cad4; color: #1f2937; }
+      .file-row.t-zip .file-more.active { background: #f0d68a; color: #854d0e; }
+      .file-row.t-other .file-more.active { background: #c3cad4; color: #1f2937; }
       .file-actions { display: none; margin: -2px 0 10px; padding: 12px 14px; background: #ffffff; border-radius: 18px; gap: 12px; justify-content: center; }
       .file-actions.open { display: flex; }
       .act-btn { width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
