@@ -407,7 +407,7 @@ function getAdminHTML() {
 
       /* 面包屑 */
       .crumb-bar { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; flex-shrink: 0; min-height: 30px; }
-      .back-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #e5e7eb; background: #ffffff; color: #374151; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1; }
+      .back-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #e5e7eb; background: #ffffff; color: #374151; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1; box-sizing: border-box; padding: 0; }
       .crumbs { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #6b7280; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
       .crumbs::-webkit-scrollbar { display: none; }
       .crumbs a { color: #3b82f6; text-decoration: none; font-weight: 600; cursor: pointer; flex-shrink: 0; }
