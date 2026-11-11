@@ -436,6 +436,7 @@ function getAdminHTML() {
       .folder-card .fc-name { font-weight: 700; color: #111827; font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; min-width: 0; }
       .folder-card .fc-count { font-size: 12px; color: #6b7280; flex-shrink: 0; }
       .folder-card .fc-more { background: none; border: none; color: #6b7280; font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+      .folder-card .fc-more.active { background: #dbeafe; color: #1d4ed8; border-radius: 8px; }
       .fc-c0 { background: #dcead9; }
       .fc-c1 { background: #fdeec2; }
       .fc-c2 { background: #d6e9fb; }
@@ -455,6 +456,7 @@ function getAdminHTML() {
       .fname-text.scrolling { animation: fnameScroll 7s ease-in-out infinite alternate; }
       .file-sub { font-size: 12px; color: #6b7280; margin-top: 3px; }
       .file-more { background: none; border: none; color: #9ca3af; font-size: 20px; cursor: pointer; padding: 6px 2px; flex-shrink: 0; }
+      .file-more.active { background: #dbeafe; color: #1d4ed8; border-radius: 8px; }
       .file-actions { display: none; margin: -2px 0 10px; padding: 12px 14px; background: #ffffff; border-radius: 18px; gap: 12px; justify-content: center; }
       .file-actions.open { display: flex; }
       .act-btn { width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -1039,11 +1041,16 @@ function getAdminHTML() {
           return;
         }
         if (e.target.closest('.file-more')) {
+          const btn = e.target.closest('.file-more');
           const acts = document.querySelector('.file-actions[data-act-for="' + idx + '"]');
           const wasOpen = acts && acts.classList.contains('open');
           document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); });
+          document.querySelectorAll('.file-more.active, .fc-more.active').forEach(function (b) { b.classList.remove('active'); });
+          const fa0 = document.getElementById('folderActions');
+          if (fa0) fa0.classList.remove('open');
           if (acts && !wasOpen) {
             acts.classList.add('open');
+            if (btn) btn.classList.add('active');
             revealActions(acts);
           }
           return;
@@ -1057,7 +1064,10 @@ function getAdminHTML() {
         document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); hadOpen = true; });
         const fa = document.getElementById('folderActions');
         if (fa && fa.classList.contains('open')) { fa.classList.remove('open'); hadOpen = true; }
-        if (hadOpen) scheduleRestore();
+        if (hadOpen) {
+          document.querySelectorAll('.file-more.active, .fc-more.active').forEach(function (b) { b.classList.remove('active'); });
+          scheduleRestore();
+        }
       }, { passive: true });
 
       document.addEventListener('click', function (e) {
@@ -1066,7 +1076,10 @@ function getAdminHTML() {
         document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); hadOpen = true; });
         const fa = document.getElementById('folderActions');
         if (fa && fa.classList.contains('open')) { fa.classList.remove('open'); hadOpen = true; }
-        if (hadOpen) restoreScrollAfterClose();
+        if (hadOpen) {
+          document.querySelectorAll('.file-more.active, .fc-more.active').forEach(function (b) { b.classList.remove('active'); });
+          restoreScrollAfterClose();
+        }
       });
 
       document.getElementById('folderSection').addEventListener('click', function (e) {
@@ -1089,10 +1102,14 @@ function getAdminHTML() {
           if (folderActionTarget === d.full && fa && fa.classList.contains('open')) {
             fa.classList.remove('open');
             folderActionTarget = null;
+            more.classList.remove('active');
           } else {
+            document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); });
+            document.querySelectorAll('.file-more.active, .fc-more.active').forEach(function (b) { b.classList.remove('active'); });
             folderActionTarget = d.full;
             if (fa) {
               fa.classList.add('open');
+              more.classList.add('active');
               revealActions(fa);
             }
           }
