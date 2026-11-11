@@ -744,6 +744,8 @@ function getAdminHTML() {
       function renderCrumbs() {
         const el = document.getElementById('crumbs');
         const backBtn = document.getElementById('backBtn');
+        const bar = document.getElementById('crumbBar');
+        bar.style.display = currentPath ? '' : 'none';
         backBtn.style.display = currentPath ? '' : 'none';
         el.innerHTML = '';
         const segs = currentPath ? currentPath.split('/') : [];
