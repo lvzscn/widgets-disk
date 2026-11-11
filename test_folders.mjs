@@ -184,8 +184,8 @@ if (m) {
   check('渲染后模板插值 ${ 存活', m[1].includes('${'));
   check('渲染后反引号存活', m[1].includes('`'));
   check('含面包屑栏', html.includes('id="crumbs"'));
-  check('含新建文件夹入口（底部菜单）', html.includes('📁 新建文件夹'));
-  check('含上传入口（底部菜单）', html.includes('📤 上传文件'));
+  check('含新建文件夹入口（底部菜单）', html.includes('新建文件夹') && html.includes('sheetCreateFolder'));
+  check('含上传入口（底部菜单）', html.includes('上传文件') && html.includes('pickFiles'));
   check('含 createFolder/renameFolder/deleteFolder/moveFile', ['createFolder', 'renameFolder', 'deleteFolder', 'moveFile'].every(fn => m[1].includes(fn)));
   check('含 renderCrumbs/goToPath/enterFolder', ['renderCrumbs', 'goToPath', 'enterFolder'].every(fn => m[1].includes(fn)));
   check('含 .keep 过滤', m[1].includes("'.keep'"));
@@ -202,6 +202,12 @@ if (m) {
   check('含文件操作展开栏', html.includes('.file-actions'));
   check('含 setFilter/onSearch/openSheet/openStorage/copyLink', ['setFilter', 'onSearch', 'openSheet', 'openStorage', 'copyLink'].every(fn => m[1].includes(fn)));
   check('含 fileTypeInfo/fmtSize', m[1].includes('fileTypeInfo') && m[1].includes('fmtSize'));
+  check('含 ICONS 图标集', m[1].includes('const ICONS') && ['ICONS.image', 'ICONS.video', 'ICONS.music', 'ICONS.file', 'ICONS.code', 'ICONS.package'].every(s => m[1].includes(s)));
+  check('文件操作按钮用 SVG 图标', ['ICONS.link', 'ICONS.download', 'ICONS.move', 'ICONS.trash'].every(s => m[1].includes(s)));
+  check('文件夹卡片用 SVG 图标', m[1].includes('ICONS.folder'));
+  check('最近文件标题为中文', html.includes('最近文件') && !html.includes('Recent File'));
+  check('渲染产物无 emoji 图标', !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/u.test(html));
+  check('静态 HTML 含内联 SVG 图标', (html.match(/<svg/g) || []).length >= 10);
   check('预览 overlay 仍在', html.includes('previewOverlay'));
   check('长文件名跑马灯仍在', html.includes('fname-text') && html.includes('fnameScroll'));
   check('旧表格已移除（无 thead-wrap/table）', !html.includes('thead-wrap') && !html.includes('<table'));

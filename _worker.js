@@ -387,24 +387,28 @@ function getAdminHTML() {
       .app { max-width: 560px; margin: 0 auto; width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 16px 0; box-sizing: border-box; }
 
       /* 搜索条 */
-      .search-wrap { flex-shrink: 0; }
-      .search-wrap input { width: 100%; box-sizing: border-box; border: none; outline: none; background: #e6ebf2; border-radius: 999px; padding: 13px 16px; font-size: 15px; color: #111827; text-align: center; }
+      .search-wrap { flex-shrink: 0; display: flex; align-items: center; background: #e6ebf2; border-radius: 999px; padding: 0 16px; }
+      .search-wrap svg { width: 18px; height: 18px; flex-shrink: 0; color: #6b7280; }
+      .search-wrap input { flex: 1; min-width: 0; box-sizing: border-box; border: none; outline: none; background: transparent; padding: 13px 8px; font-size: 15px; color: #111827; text-align: center; }
       .search-wrap input::placeholder { color: #6b7280; }
 
       /* 品牌与用量 */
       .brand-row { display: flex; justify-content: space-between; align-items: flex-end; margin: 20px 4px 0; flex-shrink: 0; }
-      .brand { font-size: 27px; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
+      .brand { font-size: 27px; font-weight: 800; color: #111827; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+      .brand svg { width: 26px; height: 26px; color: #ff5a3c; flex-shrink: 0; }
       .usage { font-size: 13px; color: #6b7280; margin-top: 4px; }
       .usage b { color: #ef4444; font-weight: 700; }
 
       /* 筛选 chips */
       .chips { display: flex; gap: 10px; margin: 16px 0 4px; flex-shrink: 0; }
-      .chip { border: 1px solid #e5e7eb; background: #ffffff; color: #374151; border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
+      .chip { border: 1px solid #e5e7eb; background: #ffffff; color: #374151; border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+      .chip svg { width: 16px; height: 16px; }
       .chip.active { background: #ff5a3c; border-color: transparent; color: #ffffff; }
 
       /* 面包屑 */
       .crumb-bar { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; flex-shrink: 0; min-height: 30px; }
-      .back-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #e5e7eb; background: #ffffff; color: #374151; font-size: 18px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+      .back-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #e5e7eb; background: #ffffff; color: #374151; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+      .back-btn svg { width: 18px; height: 18px; }
       .crumbs { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #6b7280; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
       .crumbs::-webkit-scrollbar { display: none; }
       .crumbs a { color: #3b82f6; text-decoration: none; font-weight: 600; cursor: pointer; flex-shrink: 0; }
@@ -418,7 +422,8 @@ function getAdminHTML() {
 
       /* 最近文件大卡 */
       .recent-card { background: linear-gradient(135deg, #7db9f2, #4a90e2); border-radius: 22px; padding: 22px; color: #ffffff; position: relative; overflow: hidden; cursor: pointer; }
-      .recent-card .rc-icon { font-size: 34px; opacity: 0.85; }
+      .recent-card .rc-icon { opacity: 0.85; color: #ffffff; }
+      .recent-card .rc-icon svg { width: 34px; height: 34px; }
       .recent-card .rc-name { font-size: 24px; font-weight: 800; margin-top: 34px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
       .recent-card .rc-meta { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 14px; }
       .recent-card .rc-sub { font-size: 12px; opacity: 0.85; line-height: 1.5; }
@@ -427,7 +432,8 @@ function getAdminHTML() {
       /* 文件夹卡片 */
       .folder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
       .folder-card { border-radius: 18px; padding: 18px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; min-height: 62px; box-sizing: border-box; position: relative; }
-      .folder-card .fc-icon { font-size: 26px; flex-shrink: 0; }
+      .folder-card .fc-icon { flex-shrink: 0; color: #ffffff; display: flex; }
+      .folder-card .fc-icon svg { width: 26px; height: 26px; }
       .folder-card .fc-name { font-weight: 700; color: #111827; font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; min-width: 0; }
       .folder-card .fc-count { font-size: 12px; color: #6b7280; flex-shrink: 0; }
       .folder-card .fc-more { background: none; border: none; color: #6b7280; font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
@@ -442,7 +448,8 @@ function getAdminHTML() {
 
       /* 文件行 */
       .file-row { border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; cursor: pointer; }
-      .file-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 21px; flex-shrink: 0; }
+      .file-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #ffffff; }
+      .file-icon svg { width: 22px; height: 22px; }
       .file-meta { flex: 1; min-width: 0; }
       .file-name { font-weight: 600; color: #111827; font-size: 15px; overflow: hidden; white-space: nowrap; }
       .fname-text { display: inline-block; will-change: transform; }
@@ -451,10 +458,11 @@ function getAdminHTML() {
       .file-more { background: none; border: none; color: #9ca3af; font-size: 20px; cursor: pointer; padding: 6px 2px; flex-shrink: 0; }
       .file-actions { display: none; margin: -2px 0 10px; padding: 12px 14px; background: #ffffff; border-radius: 18px; gap: 12px; justify-content: flex-end; }
       .file-actions.open { display: flex; }
-      .act-btn { width: 42px; height: 42px; border-radius: 50%; border: none; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-      .act-link { background: #f6c453; }
+      .act-btn { width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+      .act-btn svg { width: 20px; height: 20px; }
+      .act-link { background: #f6c453; color: #111827; }
       .act-dl { background: #1e3a5f; color: #ffffff; }
-      .act-move { background: #ffffff; border: 1px solid #e5e7eb; }
+      .act-move { background: #ffffff; border: 1px solid #e5e7eb; color: #374151; }
       .act-del { background: #ef4444; color: #ffffff; }
       @keyframes fnameScroll {
         0%, 25% { transform: translateX(0); }
@@ -466,6 +474,7 @@ function getAdminHTML() {
       .t-vid { background: #ece5f8; } .t-vid .file-icon { background: #b39ddb; }
       .t-aud { background: #fde8ef; } .t-aud .file-icon { background: #f2a7c3; }
       .t-doc { background: #dbeafe; } .t-doc .file-icon { background: #7db8f7; }
+      .t-pdf { background: #fee2e2; } .t-pdf .file-icon { background: #f87171; }
       .t-code { background: #e5e7eb; } .t-code .file-icon { background: #9ca3af; }
       .t-zip { background: #fef3c7; } .t-zip .file-icon { background: #f6c453; }
       .t-other { background: #f3f4f6; } .t-other .file-icon { background: #d1d5db; }
@@ -474,7 +483,8 @@ function getAdminHTML() {
 
       /* 底部导航 */
       .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: rgba(255,255,255,0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; align-items: center; padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); box-sizing: border-box; }
-      .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 18px; color: #6b7280; cursor: pointer; padding: 4px 10px; }
+      .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; color: #6b7280; cursor: pointer; padding: 4px 10px; }
+      .nav-item svg { width: 22px; height: 22px; }
       .nav-item span { font-size: 11px; font-weight: 600; }
       .nav-plus { width: 54px; height: 54px; border-radius: 50%; border: none; background: #111827; color: #ffffff; font-size: 28px; line-height: 1; cursor: pointer; margin-top: -26px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); flex-shrink: 0; }
 
@@ -483,7 +493,8 @@ function getAdminHTML() {
       .sheet-backdrop.open { display: block; }
       .action-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 61; background: #ffffff; border-radius: 24px 24px 0 0; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); transform: translateY(105%); transition: transform 0.25s ease-out; box-sizing: border-box; max-width: 560px; margin: 0 auto; }
       .action-sheet.open { transform: translateY(0); }
-      .sheet-btn { display: block; width: 100%; border: 1px solid #e5e7eb; background: #f9fafb; border-radius: 14px; padding: 15px; font-size: 16px; font-weight: 600; color: #111827; cursor: pointer; margin-bottom: 10px; text-align: left; }
+      .sheet-btn { display: flex; align-items: center; gap: 10px; width: 100%; border: 1px solid #e5e7eb; background: #f9fafb; border-radius: 14px; padding: 15px; font-size: 16px; font-weight: 600; color: #111827; cursor: pointer; margin-bottom: 10px; text-align: left; }
+      .sheet-btn svg { width: 20px; height: 20px; color: #374151; flex-shrink: 0; }
       .sheet-cancel { display: block; width: 100%; border: none; background: none; border-radius: 14px; padding: 13px; font-size: 15px; font-weight: 600; color: #6b7280; cursor: pointer; }
 
       /* 存储弹窗 */
@@ -523,21 +534,22 @@ function getAdminHTML() {
   <body>
     <div class="app">
       <div class="search-wrap">
-        <input id="searchInput" type="search" placeholder="🔍 Search" oninput="onSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchInput" type="search" placeholder="Search" oninput="onSearch()">
       </div>
       <div class="brand-row">
         <div>
-          <div class="brand">☁️ Widgets Disk</div>
+          <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>Widgets Disk</div>
           <div class="usage" id="usageLine"></div>
         </div>
       </div>
       <div class="chips" id="chips">
         <button class="chip active" data-filter="all" onclick="setFilter('all')">All</button>
-        <button class="chip" data-filter="folder" onclick="setFilter('folder')">📁 Folder</button>
-        <button class="chip" data-filter="file" onclick="setFilter('file')">📄 文件</button>
+        <button class="chip" data-filter="folder" onclick="setFilter('folder')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Folder</button>
+        <button class="chip" data-filter="file" onclick="setFilter('file')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>文件</button>
       </div>
       <div class="crumb-bar" id="crumbBar">
-        <button class="back-btn" id="backBtn" onclick="goUp()" style="display:none">‹</button>
+        <button class="back-btn" id="backBtn" onclick="goUp()" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
         <div class="crumbs" id="crumbs"></div>
       </div>
       <div class="scroll-area" id="scrollArea">
@@ -549,17 +561,17 @@ function getAdminHTML() {
     </div>
 
     <nav class="bottom-nav">
-      <button class="nav-item" onclick="goToPath('')">🏠<span>首页</span></button>
-      <button class="nav-item" onclick="openStorage()">📊<span>存储</span></button>
+      <button class="nav-item" onclick="goToPath('')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>首页</span></button>
+      <button class="nav-item" onclick="openStorage()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg><span>存储</span></button>
       <button class="nav-plus" onclick="openSheet()">＋</button>
-      <button class="nav-item" onclick="focusSearch()">🔍<span>搜索</span></button>
-      <button class="nav-item" onclick="logout()">🚪<span>退出</span></button>
+      <button class="nav-item" onclick="focusSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>搜索</span></button>
+      <button class="nav-item" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>退出</span></button>
     </nav>
 
     <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
     <div class="action-sheet" id="actionSheet">
-      <button class="sheet-btn" onclick="pickFiles()">📤 上传文件</button>
-      <button class="sheet-btn" onclick="sheetCreateFolder()">📁 新建文件夹</button>
+      <button class="sheet-btn" onclick="pickFiles()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>上传文件</button>
+      <button class="sheet-btn" onclick="sheetCreateFolder()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>新建文件夹</button>
       <button class="sheet-cancel" onclick="closeSheet()">取消</button>
     </div>
 
@@ -596,16 +608,43 @@ function getAdminHTML() {
         return (bytes / 1024 / 1024 / 1024).toFixed(2) + ' GB';
       }
 
+      const ICONS = (function () {
+        function svg(inner) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+        }
+        return {
+          cloud: svg('<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>'),
+          search: svg('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
+          folder: svg('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'),
+          folderPlus: svg('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>'),
+          file: svg('<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/>'),
+          image: svg('<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>'),
+          video: svg('<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>'),
+          music: svg('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'),
+          code: svg('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'),
+          package: svg('<path d="M16.5 9.4L7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>'),
+          link: svg('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
+          download: svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'),
+          upload: svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'),
+          move: svg('<polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/>'),
+          trash: svg('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>'),
+          home: svg('<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'),
+          chart: svg('<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>'),
+          logout: svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'),
+          chevronLeft: svg('<polyline points="15 18 9 12 15 6"/>')
+        };
+      })();
+
       function fileTypeInfo(filename) {
         const ext = filename.split('.').pop().toLowerCase();
-        if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'bmp', 'heic'].indexOf(ext) !== -1) return { cls: 't-img', icon: '🖼️' };
-        if (['mp4', 'mov', 'avi', 'mkv', 'webm'].indexOf(ext) !== -1) return { cls: 't-vid', icon: '🎬' };
-        if (['mp3', 'wav', 'flac', 'aac', 'ogg'].indexOf(ext) !== -1) return { cls: 't-aud', icon: '🎵' };
-        if (['pdf'].indexOf(ext) !== -1) return { cls: 't-doc', icon: '📕' };
-        if (['doc', 'docx', 'txt', 'md', 'xls', 'xlsx', 'ppt', 'pptx'].indexOf(ext) !== -1) return { cls: 't-doc', icon: '📄' };
-        if (['js', 'json', 'html', 'css', 'xml', 'fwd', 'rex', 'csv', 'log'].indexOf(ext) !== -1) return { cls: 't-code', icon: '💻' };
-        if (['zip', 'rar', '7z', 'tar', 'gz'].indexOf(ext) !== -1) return { cls: 't-zip', icon: '📦' };
-        return { cls: 't-other', icon: '📄' };
+        if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'bmp', 'heic'].indexOf(ext) !== -1) return { cls: 't-img', icon: ICONS.image };
+        if (['mp4', 'mov', 'avi', 'mkv', 'webm'].indexOf(ext) !== -1) return { cls: 't-vid', icon: ICONS.video };
+        if (['mp3', 'wav', 'flac', 'aac', 'ogg'].indexOf(ext) !== -1) return { cls: 't-aud', icon: ICONS.music };
+        if (['pdf'].indexOf(ext) !== -1) return { cls: 't-pdf', icon: ICONS.file };
+        if (['doc', 'docx', 'txt', 'md', 'xls', 'xlsx', 'ppt', 'pptx'].indexOf(ext) !== -1) return { cls: 't-doc', icon: ICONS.file };
+        if (['js', 'json', 'html', 'css', 'xml', 'fwd', 'rex', 'csv', 'log'].indexOf(ext) !== -1) return { cls: 't-code', icon: ICONS.code };
+        if (['zip', 'rar', '7z', 'tar', 'gz'].indexOf(ext) !== -1) return { cls: 't-zip', icon: ICONS.package };
+        return { cls: 't-other', icon: ICONS.file };
       }
 
       function renderCrumbs() {
@@ -733,7 +772,7 @@ function getAdminHTML() {
           const top = sorted[0];
           const info = fileTypeInfo(top.filename);
           recentEl.innerHTML = \`
-            <div class="sec-title"><span>Recent File</span></div>
+            <div class="sec-title"><span>最近文件</span></div>
             <div class="recent-card" id="recentCard">
               <div class="rc-icon">\${info.icon}</div>
               <div class="rc-name">\${top.filename}</div>
@@ -753,7 +792,7 @@ function getAdminHTML() {
           view.folders.forEach(function (d, i) {
             h += \`
               <div class="folder-card fc-c\${i % 5}" data-fidx="\${i}">
-                <span class="fc-icon">📁</span>
+                <span class="fc-icon">\${ICONS.folder}</span>
                 <span class="fc-name">\${d.name}</span>
                 <span class="fc-count">\${d.count} 个</span>
                 <button class="fc-more" data-fmore="\${i}">⋮</button>
@@ -779,10 +818,10 @@ function getAdminHTML() {
                 <button class="file-more">⋮</button>
               </div>
               <div class="file-actions" data-act-for="\${i}">
-                <button class="act-btn act-link" data-act="link" title="复制链接">🔗</button>
-                <button class="act-btn act-dl" data-act="download" title="下载">⬇️</button>
-                <button class="act-btn act-move" data-act="move" title="移动">↔️</button>
-                <button class="act-btn act-del" data-act="delete" title="删除">🗑️</button>
+                <button class="act-btn act-link" data-act="link" title="复制链接">\${ICONS.link}</button>
+                <button class="act-btn act-dl" data-act="download" title="下载">\${ICONS.download}</button>
+                <button class="act-btn act-move" data-act="move" title="移动">\${ICONS.move}</button>
+                <button class="act-btn act-del" data-act="delete" title="删除">\${ICONS.trash}</button>
               </div>
             \`;
           });
