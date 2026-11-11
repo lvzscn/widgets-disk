@@ -637,6 +637,9 @@ function getAdminHTML() {
       let editMode = false;
       let selFiles = new Set();
       let suppressScrollClose = false;
+      let revealRestoreTop = null;
+      let revealTop = null;
+      let restoreTimer = null;
 
       function revealActions(el) {
         const sa = document.getElementById('scrollArea');
@@ -648,10 +651,31 @@ function getAdminHTML() {
         if (r.bottom > visibleBottom) delta = r.bottom - visibleBottom + 16;
         else if (r.top < sar.top) delta = -(sar.top - r.top + 16);
         if (delta !== 0) {
+          revealRestoreTop = sa.scrollTop;
           suppressScrollClose = true;
           sa.scrollTo({ top: sa.scrollTop + delta, behavior: 'auto' });
+          revealTop = sa.scrollTop;
           setTimeout(function () { suppressScrollClose = false; }, 600);
         }
+      }
+
+      function restoreScrollAfterClose() {
+        if (revealRestoreTop === null) return;
+        const sa = document.getElementById('scrollArea');
+        const top = revealRestoreTop;
+        const rt = revealTop;
+        revealRestoreTop = null;
+        revealTop = null;
+        if (rt !== null && Math.abs(sa.scrollTop - rt) > 150) return;
+        suppressScrollClose = true;
+        sa.scrollTo({ top: top, behavior: 'auto' });
+        setTimeout(function () { suppressScrollClose = false; }, 600);
+      }
+
+      function scheduleRestore() {
+        if (revealRestoreTop === null) return;
+        if (restoreTimer) clearTimeout(restoreTimer);
+        restoreTimer = setTimeout(function () { restoreScrollAfterClose(); }, 150);
       }
 
       function fmtSize(bytes) {
@@ -1029,16 +1053,20 @@ function getAdminHTML() {
 
       document.getElementById('scrollArea').addEventListener('scroll', function () {
         if (suppressScrollClose) return;
-        document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); });
+        let hadOpen = false;
+        document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); hadOpen = true; });
         const fa = document.getElementById('folderActions');
-        if (fa) fa.classList.remove('open');
+        if (fa && fa.classList.contains('open')) { fa.classList.remove('open'); hadOpen = true; }
+        if (hadOpen) scheduleRestore();
       }, { passive: true });
 
       document.addEventListener('click', function (e) {
         if (e.target.closest('.file-actions, .folder-actions, .file-more, .fc-more, .batch-actions')) return;
-        document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); });
+        let hadOpen = false;
+        document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); hadOpen = true; });
         const fa = document.getElementById('folderActions');
-        if (fa) fa.classList.remove('open');
+        if (fa && fa.classList.contains('open')) { fa.classList.remove('open'); hadOpen = true; }
+        if (hadOpen) restoreScrollAfterClose();
       });
 
       document.getElementById('folderSection').addEventListener('click', function (e) {
