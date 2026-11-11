@@ -421,7 +421,7 @@ function getAdminHTML() {
       .sec-title .sec-more { font-size: 13px; font-weight: 500; color: #9ca3af; cursor: pointer; }
 
       /* 最近文件大卡 */
-      .recent-card { background: linear-gradient(135deg, #7db9f2, #4a90e2); border-radius: 22px; padding: 17px 22px; color: #ffffff; position: relative; overflow: hidden; cursor: pointer; margin: 0 5px; }
+      .recent-card { background: linear-gradient(135deg, #7db9f2, #4a90e2); border-radius: 22px; padding: 17px 22px; color: #ffffff; position: relative; overflow: hidden; cursor: pointer; margin: 0 10px 0 0; }
       .recent-card .rc-icon { opacity: 0.85; color: #ffffff; }
       .recent-card .rc-icon svg { width: 34px; height: 34px; }
       .recent-card .rc-name { font-size: 24px; font-weight: 800; margin-top: 34px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -430,7 +430,7 @@ function getAdminHTML() {
       .recent-card .rc-open { background: #ffffff; color: #111827; border: none; border-radius: 999px; padding: 10px 22px; font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
 
       /* 文件夹卡片 */
-      .folder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 5px; }
+      .folder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 10px 0 0; }
       .folder-card { border-radius: 18px; padding: 18px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; min-height: 62px; box-sizing: border-box; position: relative; }
       .folder-card .fc-icon { flex-shrink: 0; color: #ffffff; display: flex; }
       .folder-card .fc-icon svg { width: 26px; height: 26px; }
@@ -453,7 +453,7 @@ function getAdminHTML() {
       .folder-actions button { flex: 1; border: 1px solid #e5e7eb; background: #ffffff; border-radius: 12px; padding: 10px; font-size: 14px; font-weight: 600; color: #374151; cursor: pointer; }
 
       /* 文件行 */
-      .file-row { border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; margin: 0 5px 10px; cursor: pointer; }
+      .file-row { border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; margin: 0 10px 10px 0; cursor: pointer; }
       .file-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #ffffff; }
       .file-icon svg { width: 22px; height: 22px; }
       .file-meta { flex: 1; min-width: 0; }
