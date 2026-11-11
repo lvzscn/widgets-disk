@@ -287,7 +287,7 @@ const APP_MANIFEST = {
   scope: "/",
   display: "standalone",
   background_color: "#ffffff",
-  theme_color: "#3b82f6",
+  theme_color: "#eef3f9",
   icons: [
     { src: "/icon-192.png?v=892bc065f8", sizes: "192x192", type: "image/png" },
     { src: "/icon-512.png?v=892bc065f8", sizes: "512x512", type: "image/png" },
@@ -318,7 +318,7 @@ function getLoginHTML() {
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="文件管理">
-    <meta name="theme-color" content="#3b82f6">
+    <meta name="theme-color" content="#eef3f9">
     <link rel="apple-touch-icon" href="/icon-180.png?v=892bc065f8">
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=892bc065f8">
     <link rel="manifest" href="/manifest.webmanifest?v=892bc065f8">
@@ -376,7 +376,7 @@ function getAdminHTML() {
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="文件管理">
-    <meta name="theme-color" content="#3b82f6">
+    <meta name="theme-color" content="#eef3f9">
     <link rel="apple-touch-icon" href="/icon-180.png?v=892bc065f8">
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=892bc065f8">
     <link rel="manifest" href="/manifest.webmanifest?v=892bc065f8">
@@ -420,8 +420,8 @@ function getAdminHTML() {
       .sec-title .sec-more { font-size: 13px; font-weight: 500; color: #9ca3af; cursor: pointer; }
 
       /* 最近文件大卡 */
-      .recent-card { background: linear-gradient(135deg, #d6e9fb, #b8d4f6); border-radius: 22px; padding: 22px; color: #111827; position: relative; overflow: hidden; cursor: pointer; }
-      .recent-card .rc-icon { opacity: 0.85; color: #1f2937; }
+      .recent-card { background: linear-gradient(135deg, #7db9f2, #4a90e2); border-radius: 22px; padding: 22px; color: #ffffff; position: relative; overflow: hidden; cursor: pointer; }
+      .recent-card .rc-icon { opacity: 0.85; color: #ffffff; }
       .recent-card .rc-icon svg { width: 34px; height: 34px; }
       .recent-card .rc-name { font-size: 24px; font-weight: 800; margin-top: 34px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
       .recent-card .rc-meta { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 14px; }
