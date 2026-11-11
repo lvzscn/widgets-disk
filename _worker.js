@@ -407,7 +407,7 @@ function getAdminHTML() {
 
       /* 面包屑 */
       .crumb-bar { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; flex-shrink: 0; min-height: 30px; }
-      .back-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #e5e7eb; background: #ffffff; color: #374151; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+      .back-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #e5e7eb; background: #ffffff; color: #374151; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
       .back-btn svg { width: 18px; height: 18px; }
       .crumbs { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #6b7280; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
       .crumbs::-webkit-scrollbar { display: none; }
@@ -638,6 +638,22 @@ function getAdminHTML() {
       let editMode = false;
       let selFiles = new Set();
       let suppressScrollClose = false;
+
+      function revealActions(el) {
+        const sa = document.getElementById('scrollArea');
+        const r = el.getBoundingClientRect();
+        const sar = sa.getBoundingClientRect();
+        const navClear = 84;
+        const visibleBottom = sar.bottom - navClear;
+        let delta = 0;
+        if (r.bottom > visibleBottom) delta = r.bottom - visibleBottom + 8;
+        else if (r.top < sar.top) delta = -(sar.top - r.top + 8);
+        if (delta !== 0) {
+          suppressScrollClose = true;
+          sa.scrollTo({ top: sa.scrollTop + delta, behavior: 'smooth' });
+          setTimeout(function () { suppressScrollClose = false; }, 600);
+        }
+      }
 
       function fmtSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
@@ -1005,9 +1021,7 @@ function getAdminHTML() {
           document.querySelectorAll('.file-actions.open').forEach(function (a) { a.classList.remove('open'); });
           if (acts && !wasOpen) {
             acts.classList.add('open');
-            suppressScrollClose = true;
-            acts.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            setTimeout(function () { suppressScrollClose = false; }, 600);
+            revealActions(acts);
           }
           return;
         }
@@ -1052,9 +1066,7 @@ function getAdminHTML() {
             folderActionTarget = d.full;
             if (fa) {
               fa.classList.add('open');
-              suppressScrollClose = true;
-              fa.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-              setTimeout(function () { suppressScrollClose = false; }, 600);
+              revealActions(fa);
             }
           }
           return;
