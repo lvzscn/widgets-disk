@@ -107,13 +107,21 @@ export default {
       return Response.json(results);
     }
 
-    // API: 上传文件
+    // API: 上传文件（可带 folder 字段，传到指定文件夹）
     if (method === 'POST' && path === '/api/upload') {
       const formData = await request.formData();
       const file = formData.get('file');
       if (!file) return new Response('No file uploaded', { status: 400 });
 
-      const filename = file.name;
+      const folderRaw = (formData.get('folder') || '').toString().trim();
+      let folder = '';
+      if (folderRaw) {
+        folder = normalizeFolderPath(folderRaw);
+        if (folder === null) return new Response('文件夹路径无效', { status: 400 });
+      }
+      const base = file.name.split('/').pop().split('\\').pop();
+      if (!base || base === '.keep') return new Response('文件名无效', { status: 400 });
+      const filename = folder ? folder + '/' + base : base;
       const content = await file.arrayBuffer();
       const size = content.byteLength;
 
@@ -134,9 +142,106 @@ export default {
       return Response.json({ success: true });
     }
 
+    // API: 新建文件夹（用 path/.keep 占位标记表示空文件夹存在）
+    if (method === 'POST' && path === '/api/folder') {
+      const body = await request.json();
+      const folderPath = normalizeFolderPath(body.path || '');
+      if (!folderPath) return Response.json({ error: '文件夹名无效' }, { status: 400 });
+      const all = await listAllFiles(env.FILE_DB);
+      const conflict = all.some(function (f) { return f.filename === folderPath || isUnder(f.filename, folderPath); });
+      if (conflict) return Response.json({ error: '同名文件夹已存在' }, { status: 409 });
+      const marker = folderPath + '/.keep';
+      await env.FILE_KV.put(marker, new ArrayBuffer(0));
+      await env.FILE_DB.prepare(
+        "INSERT OR REPLACE INTO files (filename, size) VALUES (?, ?)"
+      ).bind(marker, 0).run();
+      return Response.json({ success: true });
+    }
+
+    // API: 删除文件夹及其中全部文件
+    if (method === 'DELETE' && path.startsWith('/api/folder/')) {
+      const folderPath = normalizeFolderPath(decodeURIComponent(path.replace('/api/folder/', '')));
+      if (!folderPath) return Response.json({ error: '文件夹路径无效' }, { status: 400 });
+      const all = await listAllFiles(env.FILE_DB);
+      const targets = all.filter(function (f) { return isUnder(f.filename, folderPath); });
+      for (const f of targets) {
+        await env.FILE_KV.delete(f.filename);
+        await env.FILE_DB.prepare("DELETE FROM files WHERE filename = ?").bind(f.filename).run();
+      }
+      return Response.json({ success: true, deleted: targets.length });
+    }
+
+    // API: 文件夹改名（批量搬移其中全部文件）
+    if (method === 'POST' && path === '/api/rename-folder') {
+      const body = await request.json();
+      const oldPath = normalizeFolderPath(body.oldPath || '');
+      const newPath = normalizeFolderPath(body.newPath || '');
+      if (!oldPath || !newPath || oldPath === newPath) return Response.json({ error: '文件夹路径无效' }, { status: 400 });
+      if (newPath.startsWith(oldPath + '/')) return Response.json({ error: '不能移到自身内部' }, { status: 400 });
+      const all = await listAllFiles(env.FILE_DB);
+      const targets = all.filter(function (f) { return isUnder(f.filename, oldPath); });
+      if (!targets.length) return Response.json({ error: '文件夹不存在' }, { status: 404 });
+      const conflict = all.some(function (f) { return f.filename === newPath || isUnder(f.filename, newPath); });
+      if (conflict) return Response.json({ error: '目标位置已有同名文件夹' }, { status: 409 });
+      for (const f of targets) {
+        const newName = newPath + f.filename.slice(oldPath.length);
+        const content = await env.FILE_KV.get(f.filename, { type: 'arrayBuffer' });
+        if (content !== null) await env.FILE_KV.put(newName, content);
+        await env.FILE_DB.prepare(
+          "INSERT OR REPLACE INTO files (filename, size, upload_time) VALUES (?, ?, ?)"
+        ).bind(newName, f.size, f.upload_time).run();
+        await env.FILE_KV.delete(f.filename);
+        await env.FILE_DB.prepare("DELETE FROM files WHERE filename = ?").bind(f.filename).run();
+      }
+      return Response.json({ success: true, moved: targets.length });
+    }
+
+    // API: 移动单个文件
+    if (method === 'POST' && path === '/api/move') {
+      const body = await request.json();
+      const from = (body.from || '').toString();
+      const to = (body.to || '').toString();
+      if (!from || !to || from === to) return Response.json({ error: '路径无效' }, { status: 400 });
+      if (from.split('/').some(function (s) { return s === '..' || s === '.'; }) || to.split('/').some(function (s) { return s === '..' || s === '.'; })) {
+        return Response.json({ error: '路径无效' }, { status: 400 });
+      }
+      const content = await env.FILE_KV.get(from, { type: 'arrayBuffer' });
+      if (content === null) return Response.json({ error: '源文件不存在' }, { status: 404 });
+      const exists = await env.FILE_DB.prepare("SELECT filename FROM files WHERE filename = ?").bind(to).first();
+      if (exists) return Response.json({ error: '目标位置已有同名文件' }, { status: 409 });
+      const row = await env.FILE_DB.prepare("SELECT size, upload_time FROM files WHERE filename = ?").bind(from).first();
+      await env.FILE_KV.put(to, content);
+      await env.FILE_DB.prepare(
+        "INSERT OR REPLACE INTO files (filename, size, upload_time) VALUES (?, ?, ?)"
+      ).bind(to, row ? row.size : content.byteLength, row ? row.upload_time : null).run();
+      await env.FILE_KV.delete(from);
+      await env.FILE_DB.prepare("DELETE FROM files WHERE filename = ?").bind(from).run();
+      return Response.json({ success: true });
+    }
+
     return new Response('Not Found', { status: 404 });
   }
 };
+
+// 文件夹路径归一化：去首尾斜杠与空白段；含 . .. .keep 段或非字符串返回 null；根目录返回 ''
+function normalizeFolderPath(p) {
+  if (typeof p !== 'string') return null;
+  const parts = p.split('/').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+  for (const seg of parts) {
+    if (seg === '.' || seg === '..' || seg === '.keep') return null;
+  }
+  return parts.join('/');
+}
+
+async function listAllFiles(db) {
+  const { results } = await db.prepare("SELECT filename, size, upload_time FROM files").all();
+  return results || [];
+}
+
+// filename 是否在 prefix 文件夹内（含 prefix 本身）
+function isUnder(filename, prefix) {
+  return filename === prefix || filename.indexOf(prefix + '/') === 0;
+}
 
 // 辅助函数：根据文件名推断 Content-Type
 function getContentType(filename) {
@@ -317,8 +422,8 @@ function getAdminHTML() {
       
       /* 表格区 */
       .table-container { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: none; background: #ffffff; }
-      .thead-wrap { position: sticky; top: 0; z-index: 5; min-width: 680px; background-color: #f9fafb; }
-      table { width: 100%; border-collapse: collapse; min-width: 680px; -webkit-text-size-adjust: 100%; table-layout: fixed; }
+      .thead-wrap { position: sticky; top: 0; z-index: 5; min-width: 704px; background-color: #f9fafb; }
+      table { width: 100%; border-collapse: collapse; min-width: 704px; -webkit-text-size-adjust: 100%; table-layout: fixed; }
       th { background-color: #f9fafb; color: #6b7280; font-weight: 500; font-size: 0.875rem; padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
       td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; line-height: 20px; }
       td.col-size { min-width: 96px; }
@@ -336,7 +441,7 @@ function getAdminHTML() {
       }
       
       /* 操作按钮 */
-      .actions { white-space: nowrap; min-width: 156px; }
+      .actions { white-space: nowrap; min-width: 180px; }
       .actions-in { display: flex; gap: 12px; align-items: center; }
       .actions-in > * { flex-shrink: 0; }
       .actions a { color: #3b82f6; text-decoration: none; font-weight: 500; transition: color 0.2s; }
@@ -345,6 +450,15 @@ function getAdminHTML() {
       .actions .delete-btn:hover { color: #b91c1c; }
       
       .empty-state { text-align: center; padding: 40px; color: #6b7280; }
+      
+      /* 面包屑与新建文件夹 */
+      .crumb-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+      .crumbs { display: flex; align-items: center; gap: 6px; font-size: 0.875rem; color: #6b7280; overflow: hidden; white-space: nowrap; min-width: 0; }
+      .crumbs a { color: #3b82f6; text-decoration: none; font-weight: 500; cursor: pointer; flex-shrink: 0; }
+      .crumbs .crumb-sep { color: #9ca3af; flex-shrink: 0; }
+      .crumbs .crumb-now { color: #111827; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+      .new-folder-btn { background-color: #ffffff; border: 1px solid #d1d5db; color: #111827; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.875rem; white-space: nowrap; flex-shrink: 0; }
+      .new-folder-btn:hover { background-color: #f3f4f6; }
     </style>
   </head>
   <body>
@@ -363,10 +477,14 @@ function getAdminHTML() {
       </div>
 
       <div class="card list-card" style="padding: 0;">
+        <div class="crumb-bar">
+          <div class="crumbs" id="crumbs"></div>
+          <button class="new-folder-btn" onclick="createFolder()">＋ 新建文件夹</button>
+        </div>
         <div class="table-container">
           <div class="thead-wrap">
           <table class="head-table">
-            <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:156px"></colgroup>
+            <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:180px"></colgroup>
             <thead>
               <tr>
                 <th>文件名</th>
@@ -378,7 +496,7 @@ function getAdminHTML() {
           </table>
           </div>
           <table>
-            <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:156px"></colgroup>
+            <colgroup><col style="width:232px"><col style="width:96px"><col style="width:196px"><col style="width:180px"></colgroup>
             <tbody id="fileList"></tbody>
           </table>
         </div>
@@ -391,35 +509,114 @@ function getAdminHTML() {
         window.location.reload();
       }
 
+      let currentPath = '';
+      let allFilesCache = [];
+
+      function renderCrumbs() {
+        const el = document.getElementById('crumbs');
+        el.innerHTML = '';
+        const segs = currentPath ? currentPath.split('/') : [];
+        const root = document.createElement('a');
+        root.textContent = '根目录';
+        root.onclick = function () { goToPath(''); };
+        el.appendChild(root);
+        let acc = '';
+        segs.forEach(function (s, i) {
+          acc = acc ? acc + '/' + s : s;
+          const sep = document.createElement('span');
+          sep.className = 'crumb-sep';
+          sep.textContent = '/';
+          el.appendChild(sep);
+          if (i === segs.length - 1) {
+            const now = document.createElement('span');
+            now.className = 'crumb-now';
+            now.textContent = s;
+            el.appendChild(now);
+          } else {
+            const a = document.createElement('a');
+            a.textContent = s;
+            (function (p) { a.onclick = function () { goToPath(p); }; })(acc);
+            el.appendChild(a);
+          }
+        });
+      }
+
+      function goToPath(p) {
+        currentPath = p || '';
+        loadFiles();
+      }
+
+      function enterFolder(enc) { goToPath(enc ? decodeURIComponent(enc) : ''); }
+
       async function loadFiles() {
         const res = await fetch('/api/files');
         if(res.status === 401) return window.location.reload(); // 登录失效自动刷新
         if(!res.ok) return alert('读取文件列表失败');
         
         const files = await res.json();
+        allFilesCache = files;
+        renderCrumbs();
         const tbody = document.getElementById('fileList');
-        
-        if (files.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">暂无文件，请在上方上传</div></td></tr>';
+        const prefix = currentPath ? currentPath + '/' : '';
+        const folderMap = {};
+        const showFiles = [];
+        files.forEach(function (f) {
+          const name = f.filename;
+          if (name.indexOf(prefix) !== 0) return;
+          const rest = name.slice(prefix.length);
+          if (!rest || rest === '.keep') return;
+          if (rest.slice(-6) === '/.keep') {
+            folderMap[rest.slice(0, -6).split('/')[0]] = true;
+            return;
+          }
+          if (rest.indexOf('/') !== -1) {
+            folderMap[rest.split('/')[0]] = true;
+            return;
+          }
+          showFiles.push({ name: rest, full: name, size: f.size, time: f.upload_time });
+        });
+        const folderNames = Object.keys(folderMap).sort();
+        if (folderNames.length === 0 && showFiles.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">' + (currentPath ? '此文件夹为空' : '暂无文件，请在上方上传') + '</div></td></tr>';
           return;
         }
-
         tbody.innerHTML = '';
-        files.forEach(f => {
+        folderNames.forEach(function (fname) {
+          const full = prefix + fname;
+          let count = 0;
+          files.forEach(function (f) {
+            if (f.filename.indexOf(full + '/') === 0 && f.filename.slice(-6) !== '/.keep') count++;
+          });
+          const enc = encodeURIComponent(full);
           tbody.innerHTML += \`
             <tr>
-              <td class="fname-cell"><div class="fname-box"><span class="fname-text">\${f.filename}</span></div></td>
-              <td class="col-nowrap col-size">\${(f.size / 1024).toFixed(2)} KB</td>
-              <td class="col-nowrap col-time">\${new Date(f.upload_time).toLocaleString()}</td>
+              <td class="fname-cell"><div class="fname-box"><span class="fname-text">📁 \${fname}</span></div></td>
+              <td class="col-nowrap col-size">\${count} 个文件</td>
+              <td class="col-nowrap col-time">—</td>
               <td class="actions"><div class="actions-in">
-                <a href="javascript:void(0)" onclick="previewFile('\${f.filename}')">预览</a>
-                <a href="javascript:void(0)" onclick="downloadFile('\${f.filename}')">下载</a>
-                <button class="delete-btn" onclick="deleteFile('\${f.filename}')">删除</button>
+                <a href="javascript:void(0)" onclick="enterFolder('\${enc}')">进入</a>
+                <a href="javascript:void(0)" onclick="renameFolder('\${enc}')">改名</a>
+                <button class="delete-btn" onclick="deleteFolder('\${enc}')">删除</button>
               </div></td>
             </tr>
           \`;
         });
-        document.querySelectorAll('.fname-box').forEach(box => {
+        showFiles.forEach(function (f) {
+          tbody.innerHTML += \`
+            <tr>
+              <td class="fname-cell"><div class="fname-box"><span class="fname-text">\${f.name}</span></div></td>
+              <td class="col-nowrap col-size">\${(f.size / 1024).toFixed(2)} KB</td>
+              <td class="col-nowrap col-time">\${new Date(f.time).toLocaleString()}</td>
+              <td class="actions"><div class="actions-in">
+                <a href="javascript:void(0)" onclick="previewFile('\${f.full}')">预览</a>
+                <a href="javascript:void(0)" onclick="downloadFile('\${f.full}')">下载</a>
+                <a href="javascript:void(0)" onclick="moveFile('\${f.full}')">移动</a>
+                <button class="delete-btn" onclick="deleteFile('\${f.full}')">删除</button>
+              </div></td>
+            </tr>
+          \`;
+        });
+        document.querySelectorAll('.fname-box').forEach(function (box) {
           const span = box.querySelector('.fname-text');
           const dx = span.scrollWidth - box.clientWidth;
           if (dx > 4) {
@@ -450,6 +647,7 @@ function getAdminHTML() {
           try {
             const formData = new FormData();
             formData.append('file', files[i]);
+            if (currentPath) formData.append('folder', currentPath);
             const res = await fetch('/api/upload', {
               method: 'POST',
               body: formData
@@ -482,6 +680,78 @@ function getAdminHTML() {
           loadFiles();
         } else {
           alert('删除失败');
+        }
+      }
+
+      async function createFolder() {
+        const name = prompt('新文件夹名称：');
+        if (name === null) return;
+        const clean = name.trim();
+        if (!clean || clean.indexOf('/') !== -1 || clean === '.' || clean === '..' || clean === '.keep') { alert('文件夹名无效'); return; }
+        const path = currentPath ? currentPath + '/' + clean : clean;
+        const res = await fetch('/api/folder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: path })
+        });
+        if (res.ok) { loadFiles(); }
+        else {
+          const d = await res.json().catch(function () { return {}; });
+          alert(d.error || '新建文件夹失败');
+        }
+      }
+
+      async function deleteFolder(enc) {
+        const folderPath = decodeURIComponent(enc);
+        let count = 0;
+        allFilesCache.forEach(function (f) {
+          if (f.filename.indexOf(folderPath + '/') === 0 && f.filename.slice(-6) !== '/.keep') count++;
+        });
+        if (!confirm('确定删除文件夹「' + folderPath + '」及其中 ' + count + ' 个文件吗？此操作不可恢复。')) return;
+        const res = await fetch('/api/folder/' + enc, { method: 'DELETE' });
+        if (res.ok) { loadFiles(); } else { alert('删除文件夹失败'); }
+      }
+
+      async function renameFolder(enc) {
+        const oldPath = decodeURIComponent(enc);
+        const base = oldPath.split('/').pop();
+        const name = prompt('文件夹改名：', base);
+        if (name === null) return;
+        const clean = name.trim();
+        if (!clean || clean.indexOf('/') !== -1 || clean === '.' || clean === '..' || clean === '.keep') { alert('文件夹名无效'); return; }
+        const parent = oldPath.indexOf('/') !== -1 ? oldPath.slice(0, oldPath.lastIndexOf('/')) : '';
+        const newPath = parent ? parent + '/' + clean : clean;
+        if (newPath === oldPath) return;
+        const res = await fetch('/api/rename-folder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ oldPath: oldPath, newPath: newPath })
+        });
+        if (res.ok) { loadFiles(); }
+        else {
+          const d = await res.json().catch(function () { return {}; });
+          alert(d.error || '改名失败');
+        }
+      }
+
+      async function moveFile(full) {
+        const base = full.split('/').pop();
+        const target = prompt('移动到哪个文件夹？输入文件夹路径，留空为根目录，例如：照片');
+        if (target === null) return;
+        const clean = target.trim();
+        const segs = clean.split('/').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+        if (segs.some(function (s) { return s === '..' || s === '.' || s === '.keep'; })) { alert('路径无效'); return; }
+        const to = segs.length ? segs.join('/') + '/' + base : base;
+        if (to === full) return;
+        const res = await fetch('/api/move', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from: full, to: to })
+        });
+        if (res.ok) { loadFiles(); }
+        else {
+          const d = await res.json().catch(function () { return {}; });
+          alert(d.error || '移动失败');
         }
       }
 
