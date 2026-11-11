@@ -324,10 +324,10 @@ function getLoginHTML() {
     <link rel="manifest" href="/manifest.webmanifest?v=892bc065f8">
     <title>登录 - 文件管理</title>
     <style>
-      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
       .login-card { background: white; padding: 2.5rem 2rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 320px; text-align: center; }
       h2 { margin-top: 0; color: #111827; margin-bottom: 1.5rem; }
-      input { width: 100%; padding: 0.875rem; margin-bottom: 1rem; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+      input { width: 100%; padding: 0.875rem; margin-bottom: 1rem; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.2s; -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
       input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
       button { width: 100%; padding: 0.875rem; background-color: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: background-color 0.2s; font-weight: 500; }
       button:hover { background-color: #2563eb; }
@@ -383,7 +383,8 @@ function getAdminHTML() {
     <title>文件管理控制台</title>
     <style>
       html { overscroll-behavior: none; }
-      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #eef3f9; margin: 0; padding: 0; color: #1f2937; height: 100vh; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; }
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #eef3f9; margin: 0; padding: 0; color: #1f2937; height: 100vh; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+      input, textarea, select { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
       .app { max-width: 560px; margin: 0 auto; width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 16px 0; box-sizing: border-box; }
 
       /* 搜索条 */
@@ -1351,7 +1352,7 @@ function getAdminHTML() {
         titleEl.innerHTML = '';
         const titleSpan = document.createElement('span');
         titleSpan.className = 'ptitle-text';
-        titleSpan.textContent = filename;
+        titleSpan.textContent = filename.slice(filename.lastIndexOf('/') + 1);
         titleEl.appendChild(titleSpan);
         body.innerHTML = '<div style="color:#6b7280">加载中...</div>';
         overlay.classList.add('open');
