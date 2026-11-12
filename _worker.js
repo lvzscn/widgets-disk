@@ -595,7 +595,7 @@ function getAdminHTML() {
       .preview-body pre { margin: 0; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; color: #1f2937; }
       .preview-body img { max-width: 100%; display: block; margin: 0 auto; }
       .preview-body.img-mode { padding: 16px; overflow: hidden; }
-      .img-viewer { width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; background: #eef3f9; position: relative; }
+      .img-viewer { width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; background: #eef3f9; position: relative; border-radius: 25px; }
       .img-loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.55); color: #ffffff; font-size: 13px; padding: 6px 14px; border-radius: 999px; pointer-events: none; z-index: 2; white-space: nowrap; }
       .img-viewer img { max-width: 100%; max-height: 100%; display: block; user-select: none; -webkit-user-select: none; will-change: transform; -webkit-backface-visibility: hidden; }
       .preview-urlbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background-color: #eef3f9; }
@@ -1568,7 +1568,6 @@ function getAdminHTML() {
           if (animate) settling = true;
           img.style.transition = animate ? 'transform 0.25s ease-out' : 'none';
           img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + (scale * effRatio()) + ')';
-          img.style.borderRadius = (25 / (scale * effRatio())) + 'px';
         }
         img.addEventListener('transitionend', function (e) {
           if (e.propertyName === 'transform') {
@@ -1585,8 +1584,8 @@ function getAdminHTML() {
         function clampPan() {
           const bw = initialized ? img.naturalWidth * baseRatio : img.clientWidth;
           const bh = initialized ? img.naturalHeight * baseRatio : img.clientHeight;
-          const mx = Math.max(0, (bw * scale - viewer.clientWidth) / 2) + 48;
-          const my = Math.max(0, (bh * scale - viewer.clientHeight) / 2) + 48;
+          const mx = Math.max(0, (bw * scale - viewer.clientWidth) / 2);
+          const my = Math.max(0, (bh * scale - viewer.clientHeight) / 2);
           if (tx > mx) tx = mx; if (tx < -mx) tx = -mx;
           if (ty > my) ty = my; if (ty < -my) ty = -my;
         }
