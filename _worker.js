@@ -1568,6 +1568,7 @@ function getAdminHTML() {
           if (animate) settling = true;
           img.style.transition = animate ? 'transform 0.25s ease-out' : 'none';
           img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + (scale * effRatio()) + ')';
+          img.style.borderRadius = (25 / (scale * effRatio())) + 'px';
         }
         img.addEventListener('transitionend', function (e) {
           if (e.propertyName === 'transform') {
