@@ -597,7 +597,8 @@ function getAdminHTML() {
       .preview-body.img-mode { padding: 16px; overflow: hidden; }
       .img-viewer { width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; background: #eef3f9; position: relative; }
       .img-loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.55); color: #ffffff; font-size: 13px; padding: 6px 14px; border-radius: 999px; pointer-events: none; z-index: 2; white-space: nowrap; }
-      .img-viewer img { max-width: 100%; max-height: 100%; display: block; user-select: none; -webkit-user-select: none; will-change: transform; -webkit-backface-visibility: hidden; border-radius: 12px; }
+      .img-viewer img { max-width: 100%; max-height: 100%; display: block; user-select: none; -webkit-user-select: none; will-change: transform; -webkit-backface-visibility: hidden; }
+      .img-frame { border-radius: 25px; overflow: hidden; display: block; will-change: transform; -webkit-backface-visibility: hidden; }
       .preview-urlbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background-color: #eef3f9; }
       .preview-url { flex: 1; font-size: 12px; color: #4b5563; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, Menlo, Consolas, monospace; }
       .preview-act { background-color: #ffffff; border: 1px solid #d1d5db; color: #111827; padding: 6px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0; font-size: 0.8125rem; }
@@ -1453,13 +1454,16 @@ function getAdminHTML() {
           body.innerHTML = '';
           const viewer = document.createElement('div');
           viewer.className = 'img-viewer';
+          const frame = document.createElement('div');
+          frame.className = 'img-frame';
           const img = document.createElement('img');
           img.src = fileUrl;
           img.alt = filename;
           img.draggable = false;
-          viewer.appendChild(img);
+          frame.appendChild(img);
+          viewer.appendChild(frame);
           body.appendChild(viewer);
-          setupImageZoom(viewer, img);
+          setupImageZoom(viewer, frame, img);
           return;
         }
         if (PREVIEW_TEXT_EXTS.indexOf(ext) !== -1) {
@@ -1523,7 +1527,7 @@ function getAdminHTML() {
       }
       function preventGestureZoom(e) { e.preventDefault(); }
       document.addEventListener('gesturestart', preventGestureZoom);
-      function setupImageZoom(viewer, img) {
+      function setupImageZoom(viewer, frame, img) {
         let scale = 1, tx = 0, ty = 0;
         let baseRatio = 1, initialized = false, settling = false, animLayout = false;
         function effRatio() { return animLayout ? 1 : baseRatio; }
@@ -1535,6 +1539,7 @@ function getAdminHTML() {
           const vw = viewer.clientWidth, vh = viewer.clientHeight;
           if (vw <= 0 || vh <= 0) return;
           baseRatio = Math.min(vw / img.naturalWidth, vh / img.naturalHeight, 1);
+          frame.style.borderRadius = (25 / baseRatio) + 'px';
           img.style.maxWidth = 'none'; img.style.maxHeight = 'none';
           img.style.width = img.naturalWidth + 'px';
           img.style.height = img.naturalHeight + 'px';
@@ -1566,13 +1571,13 @@ function getAdminHTML() {
         }
         function apply(animate) {
           if (animate) settling = true;
-          img.style.transition = animate ? 'transform 0.25s ease-out' : 'none';
-          img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + (scale * effRatio()) + ')';
+          frame.style.transition = animate ? 'transform 0.25s ease-out' : 'none';
+          frame.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + (scale * effRatio()) + ')';
         }
-        img.addEventListener('transitionend', function (e) {
+        frame.addEventListener('transitionend', function (e) {
           if (e.propertyName === 'transform') {
             settling = false;
-            img.style.transition = 'none';
+            frame.style.transition = 'none';
             if (animLayout) {
               animLayout = false;
               img.style.width = img.naturalWidth + 'px';
@@ -1615,7 +1620,7 @@ function getAdminHTML() {
           }
           if (pointers.size === 0 && settling) {
             settling = false;
-            const m = getComputedStyle(img).transform;
+            const m = getComputedStyle(frame).transform;
             if (m && m !== 'none') {
               const inner = m.substring(m.indexOf('(') + 1, m.lastIndexOf(')'));
               const v = inner.split(',').map(function (s) { return parseFloat(s); });
@@ -1624,8 +1629,8 @@ function getAdminHTML() {
               else if (v.length === 6) { cs = v[0]; ex = v[4]; fy = v[5]; }
               if (cs > 0) {
                 scale = cs / effRatio();
-                tx = ex + (cs - 1) * (img.offsetWidth / 2);
-                ty = fy + (cs - 1) * (img.offsetHeight / 2);
+                tx = ex + (cs - 1) * (frame.offsetWidth / 2);
+                ty = fy + (cs - 1) * (frame.offsetHeight / 2);
                 clampPan();
               }
             }
@@ -1634,7 +1639,7 @@ function getAdminHTML() {
               img.style.width = img.naturalWidth + 'px';
               img.style.height = img.naturalHeight + 'px';
             }
-            img.style.transition = 'none';
+            frame.style.transition = 'none';
             apply(false);
           }
           try { viewer.setPointerCapture(e.pointerId); } catch (err) {}
