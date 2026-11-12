@@ -576,6 +576,7 @@ function getAdminHTML() {
         .folder-grid { grid-template-columns: repeat(4, 1fr); }
         #fileSection { display: grid; grid-template-columns: 1fr 1fr; }
         #fileSection .sec-title, #fileSection .batch-actions, #fileSection .file-actions { grid-column: 1 / -1; }
+        #fileSection .file-actions, .folder-actions { width: 100%; max-width: 50%; justify-self: center; }
         .bottom-nav { margin: 0 auto; max-width: 1160px; }
       }
     </style>
