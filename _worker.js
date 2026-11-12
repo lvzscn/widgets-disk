@@ -569,6 +569,15 @@ function getAdminHTML() {
       .preview-urlbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background-color: #eef3f9; }
       .preview-url { flex: 1; font-size: 12px; color: #4b5563; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, Menlo, Consolas, monospace; }
       .preview-act { background-color: #ffffff; border: 1px solid #d1d5db; color: #111827; padding: 6px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0; font-size: 0.8125rem; }
+
+      /* 宽屏 ≥900px：容器放宽，文件夹 4 列，文件 2 列，底部导航同宽；手机完全不受影响 */
+      @media (min-width: 900px) {
+        .app { max-width: 1160px; }
+        .folder-grid { grid-template-columns: repeat(4, 1fr); }
+        #fileSection { display: grid; grid-template-columns: 1fr 1fr; }
+        #fileSection .sec-title, #fileSection .batch-actions, #fileSection .file-actions { grid-column: 1 / -1; }
+        .bottom-nav { margin: 0 auto; max-width: 1160px; }
+      }
     </style>
   </head>
   <body>
