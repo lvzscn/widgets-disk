@@ -454,7 +454,7 @@ function getAdminHTML() {
       .recent-card .rc-sub { font-size: 12px; opacity: 0.85; line-height: 1.5; }
       .recent-card .rc-open { background: #ffffff; color: #111827; border: none; border-radius: 999px; padding: 10px 22px; font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
       .rc-head h3 { font-size: 18px; font-weight: 800; color: #ffffff; margin: 0; }
-      .rc-list { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 16px; }
+      .rc-list { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; }
       .rc-item { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.16); border-radius: 14px; padding: 12px 14px; cursor: pointer; }
       .rc-item-icon { color: #ffffff; opacity: 0.9; flex-shrink: 0; display: flex; }
       .rc-item-icon svg { width: 26px; height: 26px; }
@@ -929,9 +929,10 @@ function getAdminHTML() {
           top3.forEach(function (f) {
             const info = fileTypeInfo(f.filename);
             const when = f.last_opened || f.upload_time;
+            const shortName = String(f.filename).split('/').pop().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             itemsHtml += '<div class="rc-item" data-f="' + String(f.filename).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">' +
               '<div class="rc-item-icon">' + info.icon + '</div>' +
-              '<div class="rc-item-meta"><div class="rc-item-name">' + f.filename + '</div>' +
+              '<div class="rc-item-meta"><div class="rc-item-name">' + shortName + '</div>' +
               '<div class="rc-item-sub">' + fmtSize(f.size) + ' · ' + (when ? new Date(when).toLocaleDateString() : '') + '</div></div></div>';
           });
           recentEl.innerHTML = \`
