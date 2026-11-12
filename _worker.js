@@ -103,6 +103,7 @@ export default {
 
     // API: 获取文件列表
     if (method === 'GET' && path === '/api/files') {
+      await ensureLastOpenedColumn(env.FILE_DB);
       const { results } = await env.FILE_DB.prepare("SELECT * FROM files ORDER BY upload_time DESC").all();
       return Response.json(results);
     }
@@ -188,8 +189,8 @@ export default {
         const content = await env.FILE_KV.get(f.filename, { type: 'arrayBuffer' });
         if (content !== null) await env.FILE_KV.put(newName, content);
         await env.FILE_DB.prepare(
-          "INSERT OR REPLACE INTO files (filename, size, upload_time) VALUES (?, ?, ?)"
-        ).bind(newName, f.size, f.upload_time).run();
+          "INSERT OR REPLACE INTO files (filename, size, upload_time, last_opened) VALUES (?, ?, ?, ?)"
+        ).bind(newName, f.size, f.upload_time, f.last_opened || null).run();
         await env.FILE_KV.delete(f.filename);
         await env.FILE_DB.prepare("DELETE FROM files WHERE filename = ?").bind(f.filename).run();
       }
@@ -209,13 +210,26 @@ export default {
       if (content === null) return Response.json({ error: '源文件不存在' }, { status: 404 });
       const exists = await env.FILE_DB.prepare("SELECT filename FROM files WHERE filename = ?").bind(to).first();
       if (exists) return Response.json({ error: '目标位置已有同名文件' }, { status: 409 });
-      const row = await env.FILE_DB.prepare("SELECT size, upload_time FROM files WHERE filename = ?").bind(from).first();
+      await ensureLastOpenedColumn(env.FILE_DB);
+      const row = await env.FILE_DB.prepare("SELECT size, upload_time, last_opened FROM files WHERE filename = ?").bind(from).first();
       await env.FILE_KV.put(to, content);
       await env.FILE_DB.prepare(
-        "INSERT OR REPLACE INTO files (filename, size, upload_time) VALUES (?, ?, ?)"
-      ).bind(to, row ? row.size : content.byteLength, row ? row.upload_time : null).run();
+        "INSERT OR REPLACE INTO files (filename, size, upload_time, last_opened) VALUES (?, ?, ?, ?)"
+      ).bind(to, row ? row.size : content.byteLength, row ? row.upload_time : null, row ? row.last_opened : null).run();
       await env.FILE_KV.delete(from);
       await env.FILE_DB.prepare("DELETE FROM files WHERE filename = ?").bind(from).run();
+      return Response.json({ success: true });
+    }
+
+    // API: 记录文件被打开（最近打开；失败不阻塞预览，前端 fire-and-forget 调用）
+    if (method === 'POST' && path === '/api/open') {
+      const body = await request.json().catch(function () { return {}; });
+      const filename = (body.filename || '').toString();
+      if (!filename || filename.split('/').some(function (s) { return s === '..' || s === '.'; })) {
+        return Response.json({ error: '路径无效' }, { status: 400 });
+      }
+      await ensureLastOpenedColumn(env.FILE_DB);
+      await env.FILE_DB.prepare("UPDATE files SET last_opened = datetime('now') WHERE filename = ?").bind(filename).run();
       return Response.json({ success: true });
     }
 
@@ -233,8 +247,18 @@ function normalizeFolderPath(p) {
   return parts.join('/');
 }
 
+// 给 files 表补 last_opened 列（第一次调用时建，之后跳过；查不到就忽略）
+async function ensureLastOpenedColumn(db) {
+  try {
+    const cols = await db.prepare("PRAGMA table_info(files)").all();
+    const has = (cols.results || []).some(function (c) { return c.name === 'last_opened'; });
+    if (!has) await db.prepare("ALTER TABLE files ADD COLUMN last_opened TEXT").run();
+  } catch (e) {}
+}
+
 async function listAllFiles(db) {
-  const { results } = await db.prepare("SELECT filename, size, upload_time FROM files").all();
+  await ensureLastOpenedColumn(db);
+  const { results } = await db.prepare("SELECT filename, size, upload_time, last_opened FROM files").all();
   return results || [];
 }
 
@@ -429,6 +453,13 @@ function getAdminHTML() {
       .recent-card .rc-meta { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 14px; }
       .recent-card .rc-sub { font-size: 12px; opacity: 0.85; line-height: 1.5; }
       .recent-card .rc-open { background: #ffffff; color: #111827; border: none; border-radius: 999px; padding: 10px 22px; font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+      .rc-list { display: grid; grid-template-columns: 1fr; gap: 10px; }
+      .rc-item { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.16); border-radius: 14px; padding: 12px 14px; cursor: pointer; }
+      .rc-item-icon { color: #ffffff; opacity: 0.9; flex-shrink: 0; display: flex; }
+      .rc-item-icon svg { width: 26px; height: 26px; }
+      .rc-item-meta { flex: 1; min-width: 0; }
+      .rc-item-name { font-size: 15px; font-weight: 700; color: #ffffff; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+      .rc-item-sub { font-size: 12px; color: rgba(255,255,255,0.85); margin-top: 2px; }
 
       /* 文件夹卡片 */
       .folder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 10px 0 0; }
@@ -579,6 +610,7 @@ function getAdminHTML() {
         .file-item .file-row { margin: 0; }
         .file-item .file-actions { margin: -2px 0 0; }
         .folder-actions { width: 100%; max-width: 50%; justify-self: center; }
+        .rc-list { grid-template-columns: repeat(3, 1fr); }
         .bottom-nav { margin: 0 auto; max-width: 1160px; }
       }
     </style>
@@ -886,22 +918,34 @@ function getAdminHTML() {
 
         const recentEl = document.getElementById('recentSection');
         if (!currentPath && !searchQuery && currentFilter !== 'folder' && realAll.length) {
-          const sorted = realAll.slice().sort(function (a, b) { return String(b.upload_time).localeCompare(String(a.upload_time)); });
-          const top = sorted[0];
-          const info = fileTypeInfo(top.filename);
+          const sorted = realAll.slice().sort(function (a, b) {
+            const ta = a.last_opened || a.upload_time || '';
+            const tb = b.last_opened || b.upload_time || '';
+            return String(tb).localeCompare(String(ta));
+          });
+          const top3 = sorted.slice(0, 3);
+          let itemsHtml = '';
+          top3.forEach(function (f) {
+            const info = fileTypeInfo(f.filename);
+            const when = f.last_opened || f.upload_time;
+            itemsHtml += '<div class="rc-item" data-f="' + String(f.filename).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">' +
+              '<div class="rc-item-icon">' + info.icon + '</div>' +
+              '<div class="rc-item-meta"><div class="rc-item-name">' + f.filename + '</div>' +
+              '<div class="rc-item-sub">' + fmtSize(f.size) + ' · ' + (when ? new Date(when).toLocaleDateString() : '') + '</div></div></div>';
+          });
           recentEl.innerHTML = \`
             <div class="sec-title"><span>最近文件</span></div>
             <div class="recent-card" id="recentCard">
-              <div class="rc-icon">\${info.icon}</div>
-              <div class="rc-name">\${top.filename}</div>
-              <div class="rc-meta">
-                <div class="rc-sub">\${fmtSize(top.size)}<br>上传于 \${new Date(top.upload_time).toLocaleDateString()}</div>
-                <button class="rc-open">Open</button>
-              </div>
+              <div class="rc-list">\${itemsHtml}</div>
             </div>
           \`;
           const card = document.getElementById('recentCard');
-          if (card) card.onclick = function () { previewFile(top.filename); };
+          if (card) {
+            card.onclick = function (e) {
+              const item = e.target.closest('.rc-item');
+              if (item) previewFile(item.getAttribute('data-f'));
+            };
+          }
         } else { recentEl.innerHTML = ''; }
 
         const folderEl = document.getElementById('folderSection');
@@ -1376,6 +1420,7 @@ function getAdminHTML() {
       const PREVIEW_IMG_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'bmp'];
       let previewCurrentUrl = '';
       async function previewFile(filename) {
+        try { fetch('/api/open', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: filename }) }).catch(function () {}); } catch (e) {}
         const overlay = document.getElementById('previewOverlay');
         const body = document.getElementById('previewBody');
         const titleEl = document.getElementById('previewTitle');

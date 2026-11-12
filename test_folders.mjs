@@ -31,9 +31,10 @@ const FILE_KV = {
 
 // ---- D1 stub (in-memory, upsert by filename) ----
 const dbRows = [];
-function upsert(filename, size, upload_time) {
+const dbCols = new Set(['filename', 'size', 'upload_time']);
+function upsert(filename, size, upload_time, last_opened) {
   const i = dbRows.findIndex(r => r.filename === filename);
-  const row = { filename, size, upload_time: upload_time === undefined ? new Date().toISOString() : upload_time };
+  const row = { filename, size, upload_time: upload_time === undefined || upload_time === null ? new Date().toISOString() : upload_time, last_opened: last_opened === undefined ? null : last_opened };
   if (i >= 0) dbRows[i] = row; else dbRows.push(row);
 }
 const FILE_DB = {
@@ -42,8 +43,12 @@ const FILE_DB = {
       bind(...args) {
         return {
           async run() {
-            if (sql.startsWith('INSERT')) upsert(args[0], args[1], args[2]);
+            if (sql.startsWith('INSERT')) upsert(args[0], args[1], args[2], args[3]);
             if (sql.startsWith('DELETE')) { const i = dbRows.findIndex(r => r.filename === args[0]); if (i >= 0) dbRows.splice(i, 1); }
+            if (sql.startsWith('UPDATE files SET last_opened')) {
+              const r = dbRows.find(x => x.filename === args[0]);
+              if (r) r.last_opened = new Date().toISOString();
+            }
             return {};
           },
           async all() {
@@ -55,6 +60,10 @@ const FILE_DB = {
             if (sql.startsWith('SELECT filename FROM files WHERE filename = ?')) {
               return dbRows.find(r => r.filename === args[0]) || null;
             }
+            if (sql.startsWith('SELECT size, upload_time, last_opened FROM files WHERE filename = ?')) {
+              const r = dbRows.find(r => r.filename === args[0]);
+              return r ? { size: r.size, upload_time: r.upload_time, last_opened: r.last_opened || null } : null;
+            }
             if (sql.startsWith('SELECT size, upload_time FROM files WHERE filename = ?')) {
               const r = dbRows.find(r => r.filename === args[0]);
               return r ? { size: r.size, upload_time: r.upload_time } : null;
@@ -63,8 +72,16 @@ const FILE_DB = {
           },
         };
       },
-      async all() { return { results: dbRows.slice() }; },
-      async run() { return {}; },
+      async all() {
+        if (sql.startsWith('PRAGMA table_info')) {
+          return { results: Array.from(dbCols).map(function (name) { return { name: name }; }) };
+        }
+        return { results: dbRows.slice() };
+      },
+      async run() {
+        if (sql.startsWith('ALTER TABLE')) dbCols.add('last_opened');
+        return {};
+      },
     };
   },
 };
@@ -235,6 +252,8 @@ if (m) {
   check('宽屏 ≥900px：容器 1160px、文件夹 4 列、文件 2 列（标题/批量通栏）、底部导航同宽；手机基准 560px/2列不动', html.includes('@media (min-width: 900px)') && html.includes('.app { max-width: 1160px; }') && html.includes('.folder-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }') && html.includes('#fileSection { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; margin: 0 10px 0 0; }') && html.includes('#fileSection .sec-title, #fileSection .batch-actions { grid-column: 1 / -1; }') && html.includes('.bottom-nav { margin: 0 auto; max-width: 1160px; }') && html.includes('.app { max-width: 560px;') && html.includes('.folder-grid { display: grid; grid-template-columns: 1fr 1fr;'));
   check('宽屏下文件/文件夹操作条收成半宽居中，不再通栏拉满；手机操作条全宽基准不动', html.includes('.folder-actions { width: 100%; max-width: 50%; justify-self: center; }') && html.includes('.file-actions { display: none; margin: -2px 0 10px;') && html.includes('.folder-actions { display: none; grid-column: 1 / -1;'));
   check('宽屏文件两列严格等宽 minmax(0,1fr)；每行+操作条包成 .file-item 占一格，操作条在正下方同宽', html.includes('#fileSection { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; margin: 0 10px 0 0; }') && html.includes('.file-item .file-row { margin: 0; }') && html.includes('.file-item .file-actions { margin: -2px 0 0; }') && html.includes('#fileSection .sec-title, #fileSection .batch-actions { grid-column: 1 / -1; }') && !html.includes('#fileSection .file-actions { grid-column: 1 / -1; }'));
+  check('最近打开：预览时 fire-and-forget 上报 /api/open', m[1].includes("fetch('/api/open'"));
+  check('最近蓝卡取前 3，按 last_opened（没有则 upload_time）排；每项图标+名+大小日期可点；手机竖排、桌面横排 3 列', m[1].includes('sorted.slice(0, 3)') && m[1].includes('a.last_opened || a.upload_time') && m[1].includes('class="rc-list"') && m[1].includes('class="rc-item"') && html.includes('.rc-list { display: grid; grid-template-columns: 1fr; gap: 10px; }') && html.includes('.rc-list { grid-template-columns: repeat(3, 1fr); }'));
   check('back button 24px, arrow text 20px, no global padding', html.includes('.back-btn { width: 24px; height: 24px;') && html.includes('font-size: 20px; line-height: 1;') && html.includes('box-sizing: border-box; padding: 0;'));
   check('操作条滚入视野用立刻滚动+120px 导航留白+16px 边距', m[1].includes("navClear = 120") && m[1].includes("behavior: 'auto'") && m[1].includes("visibleBottom + 16"));
   check('全部文件只显示短名（去掉文件夹前缀与根目录多余 /）', m[1].includes("lastIndexOf('/') + 1") && m[1].includes("f.full.toLowerCase()"));
@@ -264,6 +283,21 @@ check('登录页 200', res.status === 200, 'got ' + res.status);
 check('登录页底色同首页 #eef3f9，无旧 #f3f4f6', loginHtml.includes('background-color: #eef3f9') && !loginHtml.includes('#f3f4f6'));
 check('验证身份左边用网页图标 icon-192，无 🗂️ 表情', loginHtml.includes('<img src="/icon-192.png?v=892bc065f8" alt="" class="login-icon">验证身份') && !loginHtml.includes('🗂'));
 check('进入控制台按钮用蓝块同款渐变', loginHtml.includes('background: linear-gradient(135deg, #7db9f2, #4a90e2)') && !loginHtml.includes('background-color: #3b82f6') && !loginHtml.includes('background-color: #2563eb'));
+
+// T14: /api/open records last_opened; move preserves it
+console.log('T14 最近打开接口');
+res = await worker.fetch(new Request(BASE + '/api/open', { method: 'POST', headers: { ...AUTH, 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: 'b.png' }) }), env);
+check('/api/open 返回 200', res.status === 200, 'got ' + res.status);
+let rowB = dbRows.find(r => r.filename === 'b.png');
+check('b.png 有 last_opened', !!(rowB && rowB.last_opened), 'last_opened=' + (rowB && rowB.last_opened));
+res = await worker.fetch(new Request(BASE + '/api/files', { headers: AUTH }), env);
+const list2 = await j(res);
+check('/api/files 返回含 last_opened', Array.isArray(list2) && list2.some(r => r.filename === 'b.png' && r.last_opened));
+const beforeMove = (dbRows.find(r => r.filename === 'b.png') || {}).last_opened;
+res = await worker.fetch(new Request(BASE + '/api/move', { method: 'POST', headers: { ...AUTH, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: 'b.png', to: 'b-moved.png' }) }), env);
+check('move 返回 200', res.status === 200, 'got ' + res.status);
+const movedRow = dbRows.find(r => r.filename === 'b-moved.png');
+check('移动后 last_opened 保留', !!(movedRow && movedRow.last_opened === beforeMove), 'moved last_opened=' + (movedRow && movedRow.last_opened));
 
 console.log(`\n结果: ${pass} 过, ${fail} 挂`);
 process.exit(fail ? 1 : 0);
