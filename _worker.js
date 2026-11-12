@@ -1519,6 +1519,7 @@ function getAdminHTML() {
         document.getElementById('previewOverlay').classList.remove('open');
         document.getElementById('previewBody').classList.remove('img-mode');
         document.body.style.overflow = '';
+        loadFiles();
       }
       function preventGestureZoom(e) { e.preventDefault(); }
       document.addEventListener('gesturestart', preventGestureZoom);
