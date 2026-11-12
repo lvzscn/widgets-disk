@@ -453,12 +453,22 @@ function getAdminHTML() {
       .recent-card .rc-meta { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 14px; }
       .recent-card .rc-sub { font-size: 12px; opacity: 0.85; line-height: 1.5; }
       .recent-card .rc-open { background: #ffffff; color: #111827; border: none; border-radius: 999px; padding: 10px 22px; font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
-      .rc-list { display: grid; grid-template-columns: 1fr; gap: 10px; }
-      .rc-item { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.16); border-radius: 14px; padding: 12px 14px; cursor: pointer; }
-      .rc-item-icon { color: #ffffff; opacity: 0.9; flex-shrink: 0; display: flex; }
-      .rc-item-icon svg { width: 26px; height: 26px; }
+      .rc-head h3 { font-size: 18px; font-weight: 800; color: #ffffff; margin: 0; }
+      .rc-head p { font-size: 13px; color: rgba(255,255,255,0.88); margin: 6px 0 0; }
+      .rc-list { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 16px; }
+      .rc-item { display: flex; align-items: center; gap: 11px; background: rgba(255,255,255,0.16); border-radius: 14px; padding: 12px 13px; cursor: pointer; }
+      .rc-item-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #ffffff; }
+      .rc-item-icon svg { width: 20px; height: 20px; }
+      .rc-item.t-img .rc-item-icon { background: #8fce8f; }
+      .rc-item.t-vid .rc-item-icon { background: #b39ddb; }
+      .rc-item.t-aud .rc-item-icon { background: #f2a7c3; }
+      .rc-item.t-doc .rc-item-icon { background: #7db8f7; }
+      .rc-item.t-pdf .rc-item-icon { background: #f87171; }
+      .rc-item.t-code .rc-item-icon { background: #9ca3af; }
+      .rc-item.t-zip .rc-item-icon { background: #f6c453; }
+      .rc-item.t-other .rc-item-icon { background: #d1d5db; }
       .rc-item-meta { flex: 1; min-width: 0; }
-      .rc-item-name { font-size: 15px; font-weight: 700; color: #ffffff; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+      .rc-item-name { font-size: 13.5px; font-weight: 700; color: #ffffff; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
       .rc-item-sub { font-size: 12px; color: rgba(255,255,255,0.85); margin-top: 2px; }
 
       /* 文件夹卡片 */
@@ -928,7 +938,7 @@ function getAdminHTML() {
           top3.forEach(function (f) {
             const info = fileTypeInfo(f.filename);
             const when = f.last_opened || f.upload_time;
-            itemsHtml += '<div class="rc-item" data-f="' + String(f.filename).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">' +
+            itemsHtml += '<div class="rc-item ' + info.cls + '" data-f="' + String(f.filename).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">' +
               '<div class="rc-item-icon">' + info.icon + '</div>' +
               '<div class="rc-item-meta"><div class="rc-item-name">' + f.filename + '</div>' +
               '<div class="rc-item-sub">' + fmtSize(f.size) + ' · ' + (when ? new Date(when).toLocaleDateString() : '') + '</div></div></div>';
@@ -936,6 +946,10 @@ function getAdminHTML() {
           recentEl.innerHTML = \`
             <div class="sec-title"><span>最近文件</span></div>
             <div class="recent-card" id="recentCard">
+              <div class="rc-head">
+                <h3>最近打开</h3>
+                <p>刚刚用过的文件，宽屏下横排 3 个，一眼看全</p>
+              </div>
               <div class="rc-list">\${itemsHtml}</div>
             </div>
           \`;
