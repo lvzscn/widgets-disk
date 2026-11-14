@@ -133,6 +133,7 @@ check('KV 有 照片/beach.jpg', store.has('照片/beach.jpg'));
 check('D1 有 照片/beach.jpg', dbRows.some(r => r.filename === '照片/beach.jpg'));
 res = await worker.fetch(new Request(BASE + '/widgets/' + encodeURIComponent('照片/beach.jpg')), env);
 check('能取到文件夹里的文件', res.status === 200 && (await res.text()) === 'beach');
+check('取文件不缓存：/widgets/ 返回 no-store（同名覆盖后预览立即是新版，浏览器与边缘节点都不存旧版）', res.headers.get('Cache-Control') === 'no-store');
 
 // T5: nested folder + upload
 console.log('T5 嵌套文件夹');

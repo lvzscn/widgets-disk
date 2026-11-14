@@ -23,7 +23,7 @@ export default {
         headers.set('Content-Type', 'application/octet-stream');
       } else {
         headers.set('Content-Type', getContentType(filename));
-        headers.set('Cache-Control', 'public, max-age=3600');
+        headers.set('Cache-Control', 'no-store');
       }
 
       return new Response(fileContent, { headers });
